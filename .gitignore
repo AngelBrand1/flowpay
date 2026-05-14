@@ -19,6 +19,8 @@ build/
 # Environment
 .env
 .env.*
+!.env.example
+!backend/.env.example
 
 # Local planning artifacts
 .claude/
