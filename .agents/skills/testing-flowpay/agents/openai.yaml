@@ -1,0 +1,4 @@
+interface:
+  display_name: "Testing FlowPay"
+  short_description: "Tests for FlowPay invariants"
+  default_prompt: "Use $testing-flowpay to design, implement, or review tests for FlowPay domain, backend, mobile, integration, idempotency, and concurrency behavior."

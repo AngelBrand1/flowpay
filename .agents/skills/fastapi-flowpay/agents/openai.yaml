@@ -1,0 +1,4 @@
+interface:
+  display_name: "FastAPI FlowPay"
+  short_description: "Backend patterns for FlowPay"
+  default_prompt: "Use $fastapi-flowpay to implement or review a FlowPay backend change with module boundaries, FastAPI, SQLAlchemy, Alembic, and PostgreSQL."

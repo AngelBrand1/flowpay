@@ -1,0 +1,4 @@
+interface:
+  display_name: "Security Ledger FlowPay"
+  short_description: "Money and auth safety guardrails"
+  default_prompt: "Use $security-ledger-flowpay to review or implement FlowPay money movement, ledger, auth, token, idempotency, and authorization behavior."
