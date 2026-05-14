@@ -7,8 +7,8 @@ This document defines FlowPay’s conceptual model. It describes entities, relat
 ## Base Decisions
 
 - A wallet’s balance is derived from its transactions.
-- Money is represented as an integer value in the currency’s smallest unit.
-- The first version handles a single currency.
+- Money is represented as an integer value in Colombian pesos (`COP`).
+- The first version handles only Colombian pesos (`COP`).
 - The welcome bonus is an auditable transaction.
 - A transfer is represented as an operation that groups two transactions: debit and credit.
 - NFC does not create a separate financial system; it only initiates or prepares a transfer.
@@ -43,7 +43,7 @@ Conceptual fields:
 
 - `id`: unique wallet identifier.
 - `user_id`: user who owns the wallet.
-- `currency`: wallet’s currency.
+- `currency`: wallet’s currency, fixed to `COP` in the first version.
 - `created_at`: creation date and time.
 
 Relationships:
@@ -66,28 +66,28 @@ Conceptual fields:
 - `id`: unique transaction identifier.
 - `wallet_id`: affected wallet.
 - `type`: transaction type.
-- `amount`: positive value in currency’s smallest unit.
-- `origin`: movement origin.
+- `amount`: positive integer value in Colombian pesos (`COP`).
+- `source`: movement source.
 - `operation_id`: operation reference, when applicable.
 - `counterparty_wallet_id`: counterparty wallet, when applicable.
 - `created_at`: registration date and time.
 
 Initial types:
 
+- `credit`
+- `debit`
+
+Initial sources:
+
 - `welcome_bonus`
-- `transfer_debit`
-- `transfer_credit`
-
-Initial origins:
-
-- `system`
 - `manual_transfer`
 - `nfc_transfer`
 
 Rules:
 
 - `amount` is always positive.
-- The type determines if the movement increases or decreases the balance.
+- `type` determines if the movement increases or decreases the balance.
+- `source` explains why the movement exists.
 - A recorded transaction is not modified.
 - Every transaction must be able to appear in the affected wallet’s history.
 
@@ -100,7 +100,7 @@ Conceptual fields:
 - `id`: unique operation identifier.
 - `source_wallet_id`: wallet sending money.
 - `destination_wallet_id`: wallet receiving money.
-- `amount`: transferred value in currency’s smallest unit.
+- `amount`: transferred integer value in Colombian pesos (`COP`).
 - `origin`: channel for initiating the transfer.
 - `status`: operation status.
 - `created_at`: creation date and time.
@@ -115,8 +115,8 @@ Rules:
 
 - Source and destination must be different wallets.
 - A completed transfer has exactly two associated transactions:
-  - `transfer_debit` in the source wallet.
-  - `transfer_credit` in the destination wallet.
+  - `debit` in the source wallet.
+  - `credit` in the destination wallet.
 - Both transactions have the same `operation_id`.
 - Both transactions have the same `amount`.
 - A failed transfer must not record transactions that affect balance.
@@ -167,9 +167,8 @@ A wallet’s available balance is calculated as follows:
 
 ```text
 balance =
-  sum(transaction.amount where type = welcome_bonus)
-  + sum(transaction.amount where type = transfer_credit)
-  - sum(transaction.amount where type = transfer_debit)
+  sum(transaction.amount where type = credit)
+  - sum(transaction.amount where type = debit)
 ```
 
 Rules:
@@ -186,15 +185,15 @@ Conceptual result:
 
 - A `User` is created.
 - A `Wallet` is created.
-- A `Transaction` of type `welcome_bonus` with origin `system` is created.
+- A `Transaction` of type `credit` with source `welcome_bonus` is created.
 
 ### Manual Transfer
 
 Conceptual result:
 
 - A `TransferOperation` with origin `manual_transfer` is created.
-- A `Transaction` of type `transfer_debit` for the source wallet is created.
-- A `Transaction` of type `transfer_credit` for the destination wallet is created.
+- A `Transaction` of type `debit` and source `manual_transfer` for the source wallet is created.
+- A `Transaction` of type `credit` and source `manual_transfer` for the destination wallet is created.
 
 ### NFC-Assisted Transfer
 
@@ -203,7 +202,8 @@ Conceptual result:
 - NFC identifies or prepares the destination wallet.
 - The sender confirms amount and receiver.
 - A `TransferOperation` with origin `nfc_transfer` is created.
-- The same two transactions as in a manual transfer are created.
+- A `Transaction` of type `debit` and source `nfc_transfer` for the source wallet is created.
+- A `Transaction` of type `credit` and source `nfc_transfer` for the destination wallet is created.
 
 ## Model Invariants
 
@@ -213,5 +213,3 @@ Conceptual result:
 - The debit and credit of a transfer always have the same value.
 - NFC cannot record transactions outside of a confirmed transfer.
 - The welcome bonus can only be recorded once per wallet.
-
-

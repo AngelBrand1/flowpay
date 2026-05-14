@@ -43,7 +43,7 @@ The initial product will not support:
 - Real payment rails, banks, cards, PSE, Stripe, or cash entry providers.
 - Real identity verification or compliance flows.
 - User-initiated balance loading.
-- Multi-currency support.
+- Currencies other than Colombian pesos (`COP`).
 - Production-grade fraud detection.
 - Fully distributed microservices.
 
@@ -79,7 +79,7 @@ Other value opportunities, such as contextual payments, payment requests, and re
 - The first version requires simple authentication with username and password.
 - The first version supports sending money directly between wallets, manually or through an NFC-assisted Android beta flow when supported.
 - The first version does not support payment requests, cancellations, rejections, expirations, or reversals.
-- Each transaction must record, at minimum, date, time, amount, and origin.
+- Each transaction must record, at minimum, date, time, amount, and source.
 
 ## Product Success Criteria
 

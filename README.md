@@ -12,7 +12,7 @@ The project is in definition phase. Before writing application code, the reposit
 
 - `docs/product/`: product definition and main feature selection.
 - `docs/specs/`: domain rules, use cases, and conceptual model.
-- `docs/research/`: research used to validate product or technology decisions.
+- `docs/adr/`: architecture decision records.
 
 ## Principles
 

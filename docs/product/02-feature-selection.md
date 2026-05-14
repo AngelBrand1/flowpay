@@ -6,8 +6,6 @@ The main feature on top of the wallet will be NFC-assisted face-to-face transfer
 
 NFC adds value because it reduces friction in a common real-world scenario: two people are physically together and one wants to transfer money to the other without searching for a username, typing identifiers, or sharing data manually.
 
-Feasibility research is documented in `docs/research/01-nfc-feasibility.md`.
-
 ## Reasoning
 
 FlowPay must already allow direct transfers between wallets. NFC does not change the financial nature of the operation; it changes how it is initiated.

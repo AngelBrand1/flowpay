@@ -221,7 +221,7 @@ View the transactions that explain their wallet balance.
 
 ### Acceptance Criteria
 
-- The history shows welcome bonuses, debits, and credits.
-- Each transaction displays date, time, amount, type, and origin.
+- The history shows credits and debits from welcome bonuses, manual transfers, and NFC transfers.
+- Each transaction displays date, time, amount, type, and source.
 - For transfers, the sender sees an outflow and the receiver sees an inflow.
 - The history allows reconstructing the wallet balance.

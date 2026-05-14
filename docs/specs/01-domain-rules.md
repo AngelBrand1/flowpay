@@ -23,7 +23,7 @@ Represents a user’s value container within FlowPay.
 Rules:
 
 - Each wallet belongs to a single user.
-- A wallet handles only one currency in the first version.
+- A wallet handles Colombian pesos (`COP`) in the first version.
 - A wallet’s available balance is derived from its recorded transactions.
 - A wallet cannot have a negative balance.
 
@@ -41,10 +41,11 @@ Rules:
   - transaction type;
   - amount;
   - date and time;
-  - origin;
+  - source;
   - operation reference, when applicable.
 - A transaction amount must be positive.
-- The transaction direction is determined by its type, not by negative amounts.
+- The transaction type determines whether the movement increases or decreases the balance.
+- The transaction source explains why the movement exists.
 
 ### Welcome Bonus
 
@@ -75,20 +76,26 @@ Rules:
 - A transfer with an amount less than or equal to zero must be rejected.
 - A transfer to the same wallet must be rejected.
 
-## Transaction Types
+## Transaction Type and Source
 
 Initial types:
 
+- `credit`: money inflow.
+- `debit`: money outflow.
+
+Initial sources:
+
 - `welcome_bonus`: automatic initial balance granted when a wallet is created.
-- `transfer_debit`: money outflow from a transfer.
-- `transfer_credit`: money inflow from a transfer.
+- `manual_transfer`: transfer initiated manually.
+- `nfc_transfer`: transfer initiated through the NFC beta flow.
 
 Rules:
 
-- `welcome_bonus` increases the wallet balance.
-- `transfer_credit` increases the wallet balance.
-- `transfer_debit` decreases the wallet balance.
-- There must be no orphan transfer transactions: every `transfer_debit` must have a corresponding `transfer_credit` with the same amount and operation reference.
+- `credit` increases the wallet balance.
+- `debit` decreases the wallet balance.
+- `welcome_bonus` transactions must be `credit`.
+- `manual_transfer` and `nfc_transfer` transactions can be `debit` or `credit`.
+- There must be no orphan transfer transactions: every transfer `debit` must have a corresponding transfer `credit` with the same amount and operation reference.
 
 ## Balance
 
@@ -97,7 +104,7 @@ A wallet’s available balance is calculated from its transactions.
 Conceptual formula:
 
 ```text
-balance = sum(welcome_bonus) + sum(transfer_credit) - sum(transfer_debit)
+balance = sum(credit) - sum(debit)
 ```
 
 Rules:
@@ -105,7 +112,7 @@ Rules:
 - Balance must not be updated as an isolated value without an associated transaction.
 - Calculated balance must never be negative.
 - Money precision must avoid floating-point errors.
-- The first version handles a single currency.
+- The first version handles only Colombian pesos (`COP`).
 
 ## Supported Operations
 
@@ -127,7 +134,7 @@ The first version does not support:
 - Transfer rejections.
 - Transfer expirations.
 - Reversals.
-- Multiple currencies.
+- Currencies other than Colombian pesos (`COP`).
 - Integrations with external financial systems.
 
 ## NFC-Assisted Transfers
@@ -140,7 +147,7 @@ Rules:
 - The NFC flow is available only when the required device capabilities are present.
 - The sender must explicitly confirm the recipient and amount before money moves.
 - The transfer must use the same validation, balance, transaction, and auditability rules as a manual transfer.
-- A transfer initiated through NFC must record NFC as the operation origin.
+- A transfer initiated through NFC must record NFC as the operation origin and transaction source.
 - NFC must not allow automatic payments without user confirmation.
 - The first version assumes NFC is used with trusted contacts.
 - iOS is not supported in the first NFC version.
@@ -177,7 +184,7 @@ The history must allow answering:
 - What type of transaction occurred.
 - How much money moved.
 - When it happened.
-- Where the transaction came from.
+- What source created the transaction.
 - Which transactions belong to the same operation.
 
 For transfers, history must show the movement from each participant’s perspective:
