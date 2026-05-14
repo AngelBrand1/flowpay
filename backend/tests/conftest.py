@@ -12,6 +12,8 @@ TEST_DATABASE_URL = os.environ.get(
 
 os.environ.setdefault("DATABASE_URL", TEST_DATABASE_URL)
 
+import flowpay.auth.adapters.credentials_orm  # noqa: E402, F401
+import flowpay.users.adapters.user_orm  # noqa: E402, F401
 from flowpay.database import Base, get_db  # noqa: E402
 from flowpay.main import app  # noqa: E402
 
@@ -41,7 +43,12 @@ def db(apply_schema):
 @pytest.fixture()
 def client(db):
     def override_get_db():
-        yield db
+        try:
+            yield db
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
 
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as c:
