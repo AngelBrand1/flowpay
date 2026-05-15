@@ -79,9 +79,10 @@ Initial types:
 
 Initial sources:
 
-- `welcome_bonus`
-- `manual_transfer`
-- `nfc_transfer`
+- `welcome_bonus` — one-time credit on wallet creation; no operation reference.
+- `manual_transfer` — credit or debit from a manual transfer; requires operation reference.
+- `nfc_transfer` — credit or debit from an NFC-assisted transfer; requires operation reference.
+- `topup` — simulated credit added by the user directly; no operation reference; may be recorded multiple times per wallet.
 
 Rules:
 
@@ -90,6 +91,8 @@ Rules:
 - `source` explains why the movement exists.
 - A recorded transaction is not modified.
 - Every transaction must be able to appear in the affected wallet’s history.
+- Sources that require an operation reference: `manual_transfer`, `nfc_transfer`.
+- Sources that must not have an operation reference: `welcome_bonus`, `topup`.
 
 ### TransferOperation
 
@@ -187,6 +190,14 @@ Conceptual result:
 - A `Wallet` is created.
 - A `Transaction` of type `credit` with source `welcome_bonus` is created.
 
+### Top-Up
+
+Conceptual result:
+
+- A `Transaction` of type `credit` with source `topup` is created for the user's wallet.
+- No `TransferOperation` is created.
+- No counterparty is involved.
+
 ### Manual Transfer
 
 Conceptual result:
@@ -213,3 +224,5 @@ Conceptual result:
 - The debit and credit of a transfer always have the same value.
 - NFC cannot record transactions outside of a confirmed transfer.
 - The welcome bonus can only be recorded once per wallet.
+- A top-up can be recorded multiple times per wallet; there is no per-wallet uniqueness constraint.
+- Top-up amount must be between 1 and 1,000,000 COP per operation.

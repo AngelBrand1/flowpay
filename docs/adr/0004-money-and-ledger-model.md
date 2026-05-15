@@ -31,6 +31,8 @@ A completed transfer will be represented by:
 
 The welcome bonus will be represented as a `credit` transaction with source `welcome_bonus` when a wallet is created. The welcome bonus amount is fixed at **COP 50,000** for the first version. This value is hardcoded in the domain, not in configuration, so that it is subject to domain-level tests. Changing the amount requires a code change and a migration decision.
 
+A top-up will be represented as a `credit` transaction with source `topup`. It is a unilateral credit with no counterparty and no operation reference. It may be recorded multiple times per wallet. The maximum amount per top-up is **COP 1,000,000**, validated in the application service.
+
 Recorded transactions are immutable.
 
 ## Money Representation
@@ -115,6 +117,15 @@ The only difference between transfer origins is the recorded source value:
 - `manual_transfer`
 - `nfc_transfer`
 
+Source taxonomy summary:
+
+| source | type | operation_id | per-wallet limit |
+|---|---|---|---|
+| `welcome_bonus` | credit only | must be null | once |
+| `topup` | credit only | must be null | unlimited |
+| `manual_transfer` | credit or debit | required | unlimited |
+| `nfc_transfer` | credit or debit | required | unlimited |
+
 The `transfers` module always handles money movement regardless of origin. NFC never writes ledger transactions directly.
 
 ## Transaction History Read Model
@@ -147,8 +158,10 @@ These invariants must always hold:
 - Transfer debit and credit have the same amount.
 - Transfer debit and credit share the same operation reference.
 - The welcome bonus transaction is a `credit` with source `welcome_bonus`.
+- A top-up transaction is a `credit` with source `topup`; amount between 1 and 1,000,000 COP.
 - A failed transfer does not write balance-affecting transactions.
 - The welcome bonus can be recorded only once per wallet.
+- A top-up can be recorded multiple times per wallet.
 - NFC-origin transfers follow the same ledger rules as manual transfers.
 
 ## Consequences
@@ -180,6 +193,8 @@ These invariants must always hold:
 - Transfer execution must acquire `SELECT ... FOR UPDATE` on the source wallet row before reading balance.
 - The welcome bonus amount is COP 50,000 and must be validated in domain-level tests.
 - The welcome bonus must be created exactly once per wallet; a second welcome bonus for the same wallet must be rejected.
+- Top-up amount must be between 1 and 1,000,000 COP; this rule lives in the application service.
+- Top-up transactions must not carry an operation reference or counterparty.
 - Ledger transactions must only be created through approved application use cases.
 - Persistence adapters may optimize reads, but they must not bypass ledger invariants.
 - The `counterparty` join in transaction history is permitted only inside the `ledger` persistence adapter.
