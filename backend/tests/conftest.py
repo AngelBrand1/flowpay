@@ -14,6 +14,7 @@ os.environ.setdefault("DATABASE_URL", TEST_DATABASE_URL)
 
 import flowpay.auth.adapters.credentials_orm  # noqa: E402, F401
 import flowpay.users.adapters.user_orm  # noqa: E402, F401
+import flowpay.wallets.adapters.wallet_orm  # noqa: E402, F401
 from flowpay.database import Base, get_db  # noqa: E402
 from flowpay.main import app  # noqa: E402
 

@@ -181,3 +181,78 @@ def test_composition_allowed_to_import_adapters():
         assert "from flowpay.auth.adapters" in content or \
                "from flowpay.users.adapters" in content or \
                "SQLAlchemy" in content
+
+
+def test_wallets_does_not_import_users_adapters():
+    """Test that flowpay.wallets does not import flowpay.users.adapters."""
+    backend_src = Path("/Users/angelbrand/Workspace/Personal/flowpay/backend/src")
+    wallets_dir = backend_src / "flowpay" / "wallets"
+
+    if not wallets_dir.exists():
+        return
+
+    for file_path in find_python_files(wallets_dir):
+        if "__pycache__" in file_path.parts or "__init__" in file_path.name:
+            continue
+
+        with open(file_path, "r") as f:
+            content = f.read()
+
+        assert "from flowpay.users.adapters" not in content
+        assert "import flowpay.users.adapters" not in content
+
+
+def test_wallets_does_not_import_users_orm():
+    """Test that flowpay.wallets does not import users ORM models."""
+    backend_src = Path("/Users/angelbrand/Workspace/Personal/flowpay/backend/src")
+    wallets_dir = backend_src / "flowpay" / "wallets"
+
+    if not wallets_dir.exists():
+        return
+
+    for file_path in find_python_files(wallets_dir):
+        if "__pycache__" in file_path.parts or "__init__" in file_path.name:
+            continue
+
+        with open(file_path, "r") as f:
+            content = f.read()
+
+        assert "from flowpay.users.adapters.user_orm" not in content
+
+
+def test_wallets_application_no_fastapi():
+    """Test that wallets.application does not import FastAPI."""
+    backend_src = Path("/Users/angelbrand/Workspace/Personal/flowpay/backend/src")
+    wallets_app_dir = backend_src / "flowpay" / "wallets" / "application"
+
+    if not wallets_app_dir.exists():
+        return
+
+    for file_path in find_python_files(wallets_app_dir):
+        if "__pycache__" in file_path.parts or "__init__" in file_path.name:
+            continue
+
+        with open(file_path, "r") as f:
+            content = f.read()
+
+        assert "from fastapi" not in content
+        assert "import fastapi" not in content
+
+
+def test_wallets_application_no_sqlalchemy():
+    """Test that wallets.application does not import SQLAlchemy."""
+    backend_src = Path("/Users/angelbrand/Workspace/Personal/flowpay/backend/src")
+    wallets_app_dir = backend_src / "flowpay" / "wallets" / "application"
+
+    if not wallets_app_dir.exists():
+        return
+
+    for file_path in find_python_files(wallets_app_dir):
+        if "__pycache__" in file_path.parts or "__init__" in file_path.name:
+            continue
+
+        with open(file_path, "r") as f:
+            content = f.read()
+
+        assert "from sqlalchemy" not in content
+        assert "import sqlalchemy" not in content
