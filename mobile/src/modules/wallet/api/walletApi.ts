@@ -1,6 +1,6 @@
 import { ApiError } from '../../../shared/api/apiError'
 import { httpClient } from '../../../shared/api/httpClient'
-import type { Wallet, WalletResponse, TransactionsPage } from '../types'
+import type { Wallet, WalletResponse, TransactionsPage, Transaction } from '../types'
 
 export class WalletApiError extends Error {
   constructor(public readonly code: string, message: string) {
@@ -41,6 +41,17 @@ export async function getTransactions(params: GetTransactionsParams = {}): Promi
       },
     })
     return data
+  } catch (error) {
+    extractApiError(error)
+  }
+}
+
+export async function topUp(amount: number): Promise<Transaction> {
+  try {
+    const { data } = await httpClient.post<{ transaction: Transaction }>('/wallet/topup', {
+      amount,
+    })
+    return data.transaction
   } catch (error) {
     extractApiError(error)
   }

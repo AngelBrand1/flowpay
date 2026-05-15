@@ -71,6 +71,11 @@ export function WalletScreen() {
         <View style={styles.actions}>
           <AppButton title="Transfer" onPress={() => navigation.navigate('Transfer')} />
           <AppButton
+            title="Top up money"
+            variant="secondary"
+            onPress={() => navigation.navigate('TopUp')}
+          />
+          <AppButton
             title="Ver historial"
             variant="secondary"
             onPress={() => navigation.navigate('TransactionHistory')}

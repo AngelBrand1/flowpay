@@ -18,7 +18,7 @@ export interface Transaction {
   type: 'credit' | 'debit'
   amount: number
   currency: string
-  source: 'welcome_bonus' | 'manual_transfer'
+  source: 'welcome_bonus' | 'manual_transfer' | 'nfc_transfer' | 'topup'
   operation_id: string | null
   counterparty: TransactionCounterparty | null
   created_at: string

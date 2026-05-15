@@ -31,10 +31,13 @@ function formatDate(iso: string): string {
 
 function getLabel(tx: Transaction): string {
   if (tx.source === 'welcome_bonus') return 'Bono de bienvenida'
-  if (tx.counterparty?.username) {
-    return tx.type === 'credit'
-      ? `Recibido de ${tx.counterparty.username}`
-      : `Enviado a ${tx.counterparty.username}`
+  if (tx.source === 'topup') return 'Recarga de saldo'
+  if (tx.source === 'nfc_transfer' || tx.source === 'manual_transfer') {
+    if (tx.counterparty?.username) {
+      return tx.type === 'credit'
+        ? `Recibido de ${tx.counterparty.username}`
+        : `Enviado a ${tx.counterparty.username}`
+    }
   }
   return tx.type === 'credit' ? 'Crédito' : 'Débito'
 }

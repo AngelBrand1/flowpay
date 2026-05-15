@@ -1,4 +1,4 @@
-import { getTransactions, WalletApiError } from './walletApi'
+import { getTransactions, topUp, WalletApiError } from './walletApi'
 import { httpClient } from '../../../shared/api/httpClient'
 
 jest.mock('../../../shared/api/httpClient')
@@ -87,6 +87,37 @@ describe('walletApi', () => {
 
       expect(result.transactions).toHaveLength(1)
       expect(result.next_cursor).toBe('offset_1')
+    })
+  })
+
+  describe('topUp', () => {
+    it('calls POST /wallet/topup with amount', async () => {
+      const mockTransaction = {
+        id: 'txn_123',
+        type: 'credit',
+        amount: 100_000,
+        currency: 'COP',
+        source: 'topup',
+        operation_id: null,
+        counterparty: null,
+        created_at: '2026-05-15T00:00:00Z',
+      }
+      ;(httpClient.post as any).mockResolvedValue({ data: { transaction: mockTransaction } })
+
+      const result = await topUp(100_000)
+
+      expect(httpClient.post).toHaveBeenCalledWith('/wallet/topup', { amount: 100_000 })
+      expect(result.source).toBe('topup')
+      expect(result.amount).toBe(100_000)
+    })
+
+    it('throws WalletApiError on API error', async () => {
+      const { ApiError } = await import('../../../shared/api/apiError')
+      ;(httpClient.post as any).mockRejectedValue(
+        new ApiError(422, 'invalid_amount', 'Amount must be between 1 and 1,000,000 COP')
+      )
+
+      await expect(topUp(0)).rejects.toBeInstanceOf(WalletApiError)
     })
   })
 
