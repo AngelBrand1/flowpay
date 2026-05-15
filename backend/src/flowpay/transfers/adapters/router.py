@@ -78,7 +78,7 @@ def create_transfer(
             request_hash=request_hash,
         )
     except IdempotencyReplayError as e:
-        return JSONResponse(status_code=e.response_status, content=e.response_body)
+        return JSONResponse(status_code=e.response_status, content={"transfer": e.response_body})
     except TransferError as e:
         status_code = _ERROR_STATUS.get(e.code, 400)
         raise FlowPayHTTPError(code=e.code, message=e.message, status_code=status_code)

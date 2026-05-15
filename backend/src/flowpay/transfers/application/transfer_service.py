@@ -1,3 +1,4 @@
+import dataclasses
 from dataclasses import dataclass
 
 from flowpay.shared.ids import generate_id
@@ -116,26 +117,13 @@ class TransferService:
             created_at=transfer.created_at.isoformat(),
         )
 
-        response_body = {
-            "transfer": {
-                "id": summary.id,
-                "source_wallet_id": summary.source_wallet_id,
-                "destination_wallet_id": summary.destination_wallet_id,
-                "amount": summary.amount,
-                "currency": summary.currency,
-                "origin": summary.origin,
-                "status": summary.status,
-                "created_at": summary.created_at,
-            }
-        }
-
         self.idempotency_repository.store(
             idempotency_id=generate_id("idmp_"),
             user_id=user_id,
             key=idempotency_key,
             request_hash=request_hash,
             response_status=201,
-            response_body=response_body,
+            response_body=dataclasses.asdict(summary),
         )
 
         return summary
