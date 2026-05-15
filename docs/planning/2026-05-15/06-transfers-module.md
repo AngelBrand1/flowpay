@@ -537,8 +537,6 @@ Expected: 90+ tests, 0 failures.
 
 ### Not Implemented
 
-- `GET /nfc/recipient-payload`.
-- `POST /nfc/resolve-recipient`.
 - Persisted `failed` transfer operations in V1. Failed transfer attempts roll back and do not write balance-affecting ledger rows.
 - FK from `ledger_transactions.operation_id` to `transfer_operations.id`.
 - Reversals or cancellations.

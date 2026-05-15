@@ -57,7 +57,7 @@ flowpay/
 │   │       ├── wallets/
 │   │       ├── ledger/
 │   │       ├── transfers/
-│   │       └── nfc/
+│   │       └── transfers/               ← same pattern
 │   ├── tests/
 │   │   ├── __init__.py
 │   │   ├── conftest.py              ← fixtures + SQLAlchemy 2.x rollback pattern
@@ -453,7 +453,7 @@ def client(db):
 
 ### Modules — empty skeletons
 
-For each module `{auth, users, wallets, ledger, transfers, nfc}`:
+For each module `{auth, users, wallets, ledger, transfers}`:
 
 ```
 backend/src/flowpay/{module}/
@@ -468,7 +468,7 @@ backend/src/flowpay/{module}/
         __init__.py      ← empty
 ```
 
-30 empty `__init__.py` files. No logic — structure enabled for valid imports from day one.
+25 empty `__init__.py` files. No logic — structure enabled for valid imports from day one.
 
 ---
 
@@ -492,7 +492,7 @@ backend/src/flowpay/{module}/
 
 ```bash
 # Create module structure
-for mod in auth users wallets ledger transfers nfc; do
+for mod in auth users wallets ledger transfers; do
   mkdir -p backend/src/flowpay/$mod/{domain,application,ports,adapters}
   touch backend/src/flowpay/$mod/__init__.py
   touch backend/src/flowpay/$mod/domain/__init__.py

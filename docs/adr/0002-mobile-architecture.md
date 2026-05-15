@@ -21,7 +21,7 @@ The mobile app must not become a financial authority. Money movement, balance ca
 
 ## Decision
 
-FlowPay will use React Native with Expo tooling, using prebuild / Continuous Native Generation and custom development builds.
+FlowPay will use React Native with Expo tooling and custom development builds. The Android native project will be versioned in git because FlowPay owns custom native NFC code.
 
 The first version is Android-first.
 
@@ -86,12 +86,13 @@ NFC requires native platform access.
 
 Expo Go is not enough for this product because it only supports native libraries included in the Expo SDK. FlowPay needs a custom development build to use NFC libraries and Android native configuration.
 
-Using Expo prebuild/development builds provides a practical middle path:
+Using Expo tooling with committed Android native sources provides a practical middle path:
 
 - faster setup than React Native CLI alone;
 - access to native Android configuration;
 - compatibility with native libraries;
-- a future path to iOS if the product expands.
+- a future path to iOS if the product expands;
+- explicit native code review for custom Android behavior.
 
 ### Product Safety
 
@@ -117,6 +118,10 @@ The NFC module must not:
 - write transactions;
 - bypass transfer confirmation;
 - bypass backend authorization.
+
+### Why NFC requires no backend module
+
+NFC is an input channel, not a financial operation. It resolves a recipient username from a physical handshake and pre-fills the transfer form. The app then calls the existing `POST /transfers` endpoint with `destination_username`, the same endpoint used by the manual flow. The backend resolves the username to a wallet internally and has no awareness of how the username was obtained. No NFC-specific endpoint, service, migration, or ledger entry was introduced.
 
 ## Alternatives Considered
 
@@ -217,7 +222,7 @@ NFC beta is intended for trusted face-to-face transfers and must be presented wi
 
 - Requires custom development builds.
 - Requires validating NFC behavior on real Android hardware.
-- Requires managing native configuration through Expo prebuild/CNG.
+- Requires managing native configuration in the committed Android project.
 - Adds React Native and Python as separate language ecosystems if the backend uses FastAPI.
 - Requires discipline so feature folders do not become unstructured bags of hooks, screens, and adapters.
 

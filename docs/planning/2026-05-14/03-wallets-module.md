@@ -266,7 +266,6 @@ uv run alembic upgrade head
 - Ledger transactions.
 - Welcome bonus creation (belongs to ledger).
 - Transfer endpoints.
-- NFC wallet resolution.
 - Multiple wallets per user.
 - Multi-currency support (hardcoded to COP).
 - Wallet suspension or deletion.
@@ -315,7 +314,6 @@ uv run alembic upgrade head
 - Welcome bonus creation
 - Balance calculation
 - `/auth/register` refactor
-- NFC recipient resolution
 
 ## Team TL;DR
 

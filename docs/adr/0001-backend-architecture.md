@@ -46,7 +46,6 @@ Initial backend modules:
 - `wallets`
 - `ledger`
 - `transfers`
-- `nfc`
 
 Each module should follow the same conceptual structure:
 
@@ -97,7 +96,8 @@ Initial data ownership:
 - `wallets` owns wallet identity and ownership.
 - `ledger` owns transaction records and balance reconstruction.
 - `transfers` owns transfer orchestration and transfer operation state.
-- `nfc` owns NFC payload parsing, recipient resolution, and device capability concerns.
+
+NFC payload parsing, recipient resolution, and device capability concerns live entirely in the mobile adapter layer (`mobile/src/modules/nfc/`). The backend has no NFC module because NFC is an input channel: the mobile app resolves a recipient username via NFC and then calls the existing `POST /transfers` endpoint with `destination_username`. The backend never distinguishes an NFC-initiated transfer from a manual one.
 
 Shared database usage is allowed in the first version, but table ownership must remain clear. A shared database does not mean shared data ownership.
 
@@ -117,7 +117,6 @@ Valid reasons to extract a module:
 Likely extraction candidates:
 
 - `auth`, if identity becomes shared across products or requires dedicated security capabilities;
-- `nfc`, if device integration becomes complex enough to require separate release cycles;
 - read-heavy reporting or analytics modules, if they are added later.
 
 Modules that should not be extracted early:
@@ -164,7 +163,7 @@ The domain and application layers define what the system does. Adapters translat
 
 NFC is a transfer initiation channel, not a financial subsystem.
 
-The `nfc` module may read, validate, or prepare recipient payloads, but actual money movement must go through the `transfers` module and ledger rules.
+NFC payload parsing, device capability checks, and recipient resolution are handled entirely in the mobile adapter layer. The backend has no NFC module. The mobile app resolves the recipient via NFC and calls `POST /transfers` with `destination_username` — the same endpoint used by manual transfers. Actual money movement always goes through the `transfers` module and ledger rules regardless of how the recipient was selected.
 
 ## Alternatives Considered
 
@@ -218,8 +217,8 @@ Vertical slices may still influence application services inside modules.
 
 - `ledger` owns transaction records.
 - `transfers` owns transfer orchestration.
-- `nfc` never writes ledger records directly.
 - All money movement, regardless of initiation channel, must go through the same transfer application use case.
+- NFC recipient resolution belongs to the mobile adapter layer; the backend has no NFC module.
 - HTTP adapters call application use cases; they do not implement business rules.
 - Persistence adapters store and retrieve data; they do not decide financial validity.
 - The backend derives the source wallet from the authenticated user.

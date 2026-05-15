@@ -106,16 +106,16 @@ This protects against double taps, mobile retries, network timeouts, and repeate
 
 ## NFC Implication
 
-NFC does not change the ledger model.
+NFC does not change the ledger model. There is no backend NFC module; NFC payload parsing and recipient resolution live entirely in the mobile adapter layer.
 
-An NFC-initiated transfer creates the same `TransferOperation`, debit transaction, and credit transaction as a manual transfer.
+When the mobile app resolves a recipient via NFC it calls `POST /transfers` with `destination_username` and `origin: "nfc_transfer"` — the same endpoint used by the manual flow. The backend processes both identically.
 
-The only difference is the operation origin and ledger transaction source:
+The only difference between transfer origins is the recorded source value:
 
 - `manual_transfer`
 - `nfc_transfer`
 
-NFC must not write ledger transactions directly.
+The `transfers` module always handles money movement regardless of origin. NFC never writes ledger transactions directly.
 
 ## Transaction History Read Model
 

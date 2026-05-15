@@ -29,7 +29,7 @@ FlowPay will use the following first-version stack:
 - Database: PostgreSQL.
 - Persistence: SQLAlchemy 2.x (sync) with `psycopg` v3 driver.
 - Migrations: Alembic.
-- Mobile: React Native with Expo prebuild / development builds.
+- Mobile: React Native with Expo tooling, custom development builds, and a committed Android native project for NFC.
 - NFC: `react-native-nfc-manager`.
 - Auth: username/password with JWT access tokens (HS256).
 - Testing: pytest with PostgreSQL-backed integration tests.
@@ -96,7 +96,7 @@ Database migrations should respect module ownership. A shared database does not 
 
 React Native keeps the mobile app close to the React development model while allowing native mobile capabilities.
 
-Expo tooling is selected to move faster, but the project will use prebuild / Continuous Native Generation and custom development builds.
+Expo tooling is selected to move faster, but FlowPay will keep the Android native project in git so custom NFC code stays explicit and reviewable.
 
 Expo Go is not sufficient for FlowPay because NFC requires native libraries and Android configuration.
 
@@ -104,7 +104,7 @@ Expo Go is not sufficient for FlowPay because NFC requires native libraries and 
 
 `react-native-nfc-manager` is selected as the initial NFC library because it provides React Native NFC primitives and supports Android use cases relevant to the beta feature.
 
-NFC remains an initiation adapter. It does not move money, validate balances, or write ledger records.
+NFC is implemented entirely in the mobile adapter layer (`mobile/src/modules/nfc/`). The backend has no NFC module. NFC resolves a recipient username on-device and passes it to `POST /transfers` as `destination_username` — the same field used by manual transfers. The backend never distinguishes an NFC-initiated transfer from a manual one, and no NFC-specific endpoint, service, or migration exists.
 
 ### Auth: Username/Password + JWT (HS256)
 
@@ -209,7 +209,7 @@ React Native CLI provides maximum native control, but Expo prebuild/development 
 - Sync SQLAlchemy route handlers run in a threadpool; at high I/O concurrency this is less resource-efficient than async I/O.
 - Python backend and TypeScript mobile introduce two language ecosystems.
 - NFC requires custom development builds and real Android device validation.
-- Expo prebuild/CNG requires discipline to avoid native configuration drift.
+- Committed Android native code requires discipline to keep generated and manual changes aligned.
 
 ## Guardrails
 
