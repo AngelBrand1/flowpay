@@ -6,4 +6,5 @@ export type PublicStackParamList = {
 export type ProtectedStackParamList = {
   Wallet: undefined
   Transfer: undefined
+  TransactionHistory: undefined
 }

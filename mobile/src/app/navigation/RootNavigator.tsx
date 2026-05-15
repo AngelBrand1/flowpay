@@ -5,6 +5,7 @@ import { WalletScreen } from '../../modules/wallet/screens/WalletScreen'
 import { LoginScreen } from '../../modules/auth/screens/LoginScreen'
 import { RegisterScreen } from '../../modules/auth/screens/RegisterScreen'
 import { TransferScreen } from '../../modules/transfers/screens/TransferScreen'
+import { TransactionHistoryScreen } from '../../modules/wallet/screens/TransactionHistoryScreen'
 import { useAuthSession } from '../../modules/auth/hooks/useAuthSession'
 import type { ProtectedStackParamList, PublicStackParamList } from './types'
 
@@ -25,6 +26,7 @@ function ProtectedNavigator() {
     <ProtectedStack.Navigator screenOptions={{ headerShown: false }}>
       <ProtectedStack.Screen name="Wallet" component={WalletScreen} />
       <ProtectedStack.Screen name="Transfer" component={TransferScreen} />
+      <ProtectedStack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
     </ProtectedStack.Navigator>
   )
 }

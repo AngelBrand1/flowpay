@@ -46,6 +46,7 @@ export function useTransfer() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wallet'] })
+      queryClient.invalidateQueries({ queryKey: ['wallet', 'transactions'] })
       setErrorMessage(null)
     },
     onError: (error) => {
