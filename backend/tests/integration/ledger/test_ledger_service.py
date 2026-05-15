@@ -223,3 +223,34 @@ def test_debit_cannot_use_welcome_bonus_source(ledger_service: LedgerService, te
             source="welcome_bonus",
         )
         db.flush()
+
+
+def test_record_topup_credits_wallet(ledger_service: LedgerService, test_wallet):
+    txn = ledger_service.record_topup(test_wallet.id, 100_000)
+
+    assert txn.id.startswith("txn_")
+    assert txn.wallet_id == test_wallet.id
+    assert txn.type == "credit"
+    assert txn.amount == 100_000
+    assert txn.currency == "COP"
+    assert txn.source == "topup"
+    assert txn.operation_id is None
+    assert txn.counterparty_wallet_id is None
+
+
+def test_record_topup_can_be_called_multiple_times(ledger_service: LedgerService, test_wallet):
+    ledger_service.record_topup(test_wallet.id, 50_000)
+    ledger_service.record_topup(test_wallet.id, 50_000)
+
+    balance = ledger_service.get_wallet_balance(test_wallet.id)
+    assert balance.balance == 100_000
+
+
+def test_record_topup_rejects_zero_amount(ledger_service: LedgerService, test_wallet):
+    with pytest.raises(ValueError):
+        ledger_service.record_topup(test_wallet.id, 0)
+
+
+def test_record_topup_rejects_amount_above_max(ledger_service: LedgerService, test_wallet):
+    with pytest.raises(ValueError):
+        ledger_service.record_topup(test_wallet.id, 1_000_001)

@@ -36,6 +36,14 @@ class WalletEnvelope(BaseModel):
     wallet: WalletResponse
 
 
+class TopUpRequest(BaseModel):
+    amount: int
+
+
+class TopUpResponse(BaseModel):
+    transaction: TransactionResponse
+
+
 @router.get("/wallet", response_model=WalletEnvelope)
 def get_wallet(
     current_user_id: str = Depends(get_current_user_id),
@@ -59,6 +67,42 @@ def get_wallet(
             id=wallet_summary.id,
             currency=wallet_summary.currency,
             balance=balance.balance,
+        )
+    )
+
+
+@router.post("/wallet/topup", response_model=TopUpResponse, status_code=201)
+def topup_wallet(
+    body: TopUpRequest,
+    current_user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+) -> TopUpResponse:
+    wallet_service = build_wallet_service(db)
+    ledger_service = build_ledger_service(db)
+
+    wallet_summary = wallet_service.get_by_user_id(current_user_id)
+    if wallet_summary is None:
+        raise FlowPayHTTPError(
+            code="wallet_not_found",
+            message="Wallet not found",
+            status_code=404,
+        )
+
+    try:
+        txn = ledger_service.record_topup(wallet_summary.id, body.amount)
+    except ValueError as exc:
+        raise FlowPayHTTPError(code="invalid_amount", message=str(exc), status_code=400)
+
+    return TopUpResponse(
+        transaction=TransactionResponse(
+            id=txn.id,
+            type=txn.type,
+            amount=txn.amount,
+            currency=txn.currency,
+            source=txn.source,
+            operation_id=txn.operation_id,
+            counterparty=None,
+            created_at=txn.created_at,
         )
     )
 

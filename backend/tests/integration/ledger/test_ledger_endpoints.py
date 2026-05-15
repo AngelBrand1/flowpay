@@ -241,3 +241,82 @@ def test_get_wallet_transactions_rejects_invalid_type(client: TestClient, db: Se
 
     assert resp.status_code == 400
     assert resp.json()["error"]["code"] == "invalid_type"
+
+
+def test_topup_wallet_returns_201_with_transaction(client: TestClient, db: Session):
+    token, _ = _register_and_get(client, "topup_user")
+
+    resp = client.post(
+        "/wallet/topup",
+        json={"amount": 200_000},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["transaction"]["type"] == "credit"
+    assert data["transaction"]["amount"] == 200_000
+    assert data["transaction"]["source"] == "topup"
+    assert data["transaction"]["operation_id"] is None
+    assert data["transaction"]["counterparty"] is None
+
+
+def test_topup_updates_wallet_balance(client: TestClient, db: Session):
+    token, _ = _register_and_get(client, "topup_balance_user")
+
+    client.post(
+        "/wallet/topup",
+        json={"amount": 100_000},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    resp = client.get("/wallet", headers={"Authorization": f"Bearer {token}"})
+    assert resp.json()["wallet"]["balance"] == 150_000  # 50k bonus + 100k topup
+
+
+def test_topup_rejects_zero_amount(client: TestClient, db: Session):
+    token, _ = _register_and_get(client, "topup_zero_user")
+
+    resp = client.post(
+        "/wallet/topup",
+        json={"amount": 0},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "invalid_amount"
+
+
+def test_topup_rejects_amount_above_max(client: TestClient, db: Session):
+    token, _ = _register_and_get(client, "topup_max_user")
+
+    resp = client.post(
+        "/wallet/topup",
+        json={"amount": 1_000_001},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "invalid_amount"
+
+
+def test_topup_requires_authentication(client: TestClient):
+    resp = client.post("/wallet/topup", json={"amount": 100_000})
+    assert resp.status_code == 401
+
+
+def test_topup_appears_in_transaction_history(client: TestClient, db: Session):
+    token, _ = _register_and_get(client, "topup_history_user")
+    client.post(
+        "/wallet/topup",
+        json={"amount": 75_000},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    resp = client.get(
+        "/wallet/transactions?type=credit",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    sources = [t["source"] for t in resp.json()["transactions"]]
+    assert "topup" in sources

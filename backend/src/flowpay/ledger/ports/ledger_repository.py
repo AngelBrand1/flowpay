@@ -10,7 +10,7 @@ class TransactionRecord:
     type: str  # 'credit' or 'debit'
     amount: int  # positive integer COP
     currency: str  # always 'COP'
-    source: str  # 'welcome_bonus', 'manual_transfer', 'nfc_transfer'
+    source: str  # 'welcome_bonus', 'manual_transfer', 'nfc_transfer', 'topup'
     operation_id: str | None
     counterparty_wallet_id: str | None
     created_at: datetime

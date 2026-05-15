@@ -7,6 +7,7 @@ from flowpay.ledger.ports.ledger_repository import (
 )
 
 WELCOME_BONUS_AMOUNT = 50_000
+TOP_UP_MAX_AMOUNT = 1_000_000
 
 
 @dataclass
@@ -58,6 +59,23 @@ class LedgerService:
             counterparty_username=None,
             created_at=record.created_at.isoformat(),
         )
+
+    def record_topup(self, wallet_id: str, amount: int) -> TransactionSummary:
+        """Record a simulated top-up credit for the given wallet."""
+        if amount <= 0 or amount > TOP_UP_MAX_AMOUNT:
+            raise ValueError(f"amount must be between 1 and {TOP_UP_MAX_AMOUNT}")
+
+        transaction_id = generate_id("txn_")
+        record = self.repository.create_entry(
+            transaction_id=transaction_id,
+            wallet_id=wallet_id,
+            type="credit",
+            amount=amount,
+            source="topup",
+            operation_id=None,
+            counterparty_wallet_id=None,
+        )
+        return self._to_summary(record)
 
     def record_transfer_entries(
         self,

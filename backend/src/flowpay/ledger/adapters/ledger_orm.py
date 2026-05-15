@@ -25,16 +25,16 @@ class LedgerTransaction(Base):
         CheckConstraint("currency = 'COP'", name="ck_ledger_transactions_currency_cop"),
         CheckConstraint("type IN ('credit', 'debit')", name="ck_ledger_transactions_type"),
         CheckConstraint(
-            "source IN ('welcome_bonus', 'manual_transfer', 'nfc_transfer')",
+            "source IN ('welcome_bonus', 'manual_transfer', 'nfc_transfer', 'topup')",
             name="ck_ledger_transactions_source",
         ),
         CheckConstraint(
-            "(type = 'credit' AND source IN ('welcome_bonus', 'manual_transfer', 'nfc_transfer')) "
+            "(type = 'credit' AND source IN ('welcome_bonus', 'manual_transfer', 'nfc_transfer', 'topup')) "
             "OR (type = 'debit' AND source IN ('manual_transfer', 'nfc_transfer'))",
             name="ck_ledger_transactions_type_source",
         ),
         CheckConstraint(
-            "(source = 'welcome_bonus' AND operation_id IS NULL) "
+            "(source IN ('welcome_bonus', 'topup') AND operation_id IS NULL) "
             "OR (source IN ('manual_transfer', 'nfc_transfer') AND operation_id IS NOT NULL)",
             name="ck_ledger_transactions_operation_reference",
         ),
