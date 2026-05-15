@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest'
 import { mapTransactionError, type TransactionFilter } from './useTransactionHistory'
 import { WalletApiError } from '../api/walletApi'
 

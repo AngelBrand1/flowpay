@@ -1,12 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { getTransactions, WalletApiError } from './walletApi'
 import { httpClient } from '../../../shared/api/httpClient'
 
-vi.mock('../../../shared/api/httpClient')
+jest.mock('../../../shared/api/httpClient')
 
 describe('walletApi', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
   })
 
   describe('getTransactions', () => {

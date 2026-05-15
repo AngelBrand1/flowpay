@@ -7,6 +7,7 @@ interface TransferInput {
   destinationUsername: string
   amount: number
   idempotencyKey: string
+  origin?: 'manual_transfer' | 'nfc_transfer'
 }
 
 function mapTransferError(error: unknown): string {
@@ -41,7 +42,7 @@ export function useTransfer() {
       createTransfer({
         destination_username: input.destinationUsername,
         amount: input.amount,
-        origin: 'manual_transfer',
+        origin: input.origin ?? 'manual_transfer',
         idempotencyKey: input.idempotencyKey,
       }),
     onSuccess: () => {

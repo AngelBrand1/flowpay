@@ -1,22 +1,27 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { ProtectedStackParamList } from '../../../app/navigation/types'
 import { AppButton, AppText, TextField, Screen, theme } from '../../../shared/ui'
+import { useNfcRecipientScanner } from '../../nfc/hooks/useNfcRecipientScanner'
+import { getRecipientUsernameFromPayload } from '../../nfc/nfcRecipient'
 import { useTransfer } from '../hooks/useTransfer'
 import type { Transfer } from '../types'
 
 type Nav = NativeStackNavigationProp<ProtectedStackParamList, 'Transfer'>
 
 type TransferStep = 'recipient' | 'amount' | 'confirm' | 'success' | 'error'
+type TransferOrigin = 'manual_transfer' | 'nfc_transfer'
 
 function createIdempotencyKey(): string {
   if (globalThis.crypto?.randomUUID) {
     return globalThis.crypto.randomUUID()
   }
-
-  return `transfer_${Date.now()}_${Math.random().toString(36).slice(2)}`
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
+  })
 }
 
 function formatAmount(amount: number): string {
@@ -43,6 +48,52 @@ export function TransferScreen() {
   const [amountError, setAmountError] = useState<string | null>(null)
   const [idempotencyKey, setIdempotencyKey] = useState(() => createIdempotencyKey())
   const [confirmedTransfer, setConfirmedTransfer] = useState<Transfer | null>(null)
+  const [origin, setOrigin] = useState<TransferOrigin>('manual_transfer')
+  const {
+    status: nfcScanStatus,
+    scanContinuously: scanNfcRecipients,
+    reset: resetNfcScan,
+  } = useNfcRecipientScanner()
+  const recipientRef = useRef(recipient)
+  const stepRef = useRef(step)
+
+  useEffect(() => {
+    recipientRef.current = recipient
+  }, [recipient])
+
+  useEffect(() => {
+    stepRef.current = step
+  }, [step])
+
+  useEffect(() => {
+    if (step !== 'recipient' || recipient.trim()) {
+      return
+    }
+
+    let active = true
+
+    scanNfcRecipients(
+      (payload) => {
+        const destination = getRecipientUsernameFromPayload(payload)
+        if (!destination || !active || recipientRef.current.trim()) return
+        setRecipient(destination)
+        setOrigin('nfc_transfer')
+        setStep('amount')
+      },
+      () => active && stepRef.current === 'recipient' && !recipientRef.current.trim(),
+    )
+
+    return () => {
+      active = false
+    }
+  }, [recipient, scanNfcRecipients, step])
+
+  function resetTransferDraft() {
+    setIdempotencyKey(createIdempotencyKey())
+    setConfirmedTransfer(null)
+    setOrigin('manual_transfer')
+    resetNfcScan()
+  }
 
   if (step === 'success' && confirmedTransfer) {
     return (
@@ -96,6 +147,7 @@ export function TransferScreen() {
                 destinationUsername: recipient.trim(),
                 amount: numAmount,
                 idempotencyKey,
+                origin,
               })
               setConfirmedTransfer(result)
               setStep('success')
@@ -113,16 +165,14 @@ export function TransferScreen() {
           onPress={() => {
             setStep('recipient')
             setAmountError(null)
-            setIdempotencyKey(createIdempotencyKey())
-            setConfirmedTransfer(null)
+            resetTransferDraft()
           }}
         />
         <AppButton
           title="Cancelar"
           variant="secondary"
           onPress={() => {
-            setIdempotencyKey(createIdempotencyKey())
-            setConfirmedTransfer(null)
+            resetTransferDraft()
             navigation.navigate('Wallet')
           }}
         />
@@ -151,9 +201,24 @@ export function TransferScreen() {
           placeholder="Nombre de usuario del destinatario"
           autoCapitalize="none"
           value={recipient}
-          onChangeText={setRecipient}
+          onChangeText={(text) => {
+            setRecipient(text)
+            setOrigin('manual_transfer')
+          }}
           editable={!isLoading}
         />
+        <View style={styles.nfcStatusCard}>
+          {nfcScanStatus === 'scanning' && <ActivityIndicator size="small" style={styles.nfcLoader} />}
+          <AppText variant="muted" style={styles.nfcStatusText}>
+            {nfcScanStatus === 'scanning'
+              ? 'Leyendo por NFC'
+              : nfcScanStatus === 'found'
+                ? 'NFC detectado'
+                : nfcScanStatus === 'unavailable'
+                  ? 'NFC no disponible'
+                  : 'NFC activo'}
+          </AppText>
+        </View>
         <AppButton
           title="Siguiente"
           onPress={() => {
@@ -171,8 +236,7 @@ export function TransferScreen() {
           title="Cancelar"
           variant="secondary"
           onPress={() => {
-            setIdempotencyKey(createIdempotencyKey())
-            setConfirmedTransfer(null)
+            resetTransferDraft()
             navigation.navigate('Wallet')
           }}
         />
@@ -186,6 +250,11 @@ export function TransferScreen() {
         <AppText variant="title" style={styles.stepTitle}>
           ¿Cuánto deseas transferir?
         </AppText>
+        {origin === 'nfc_transfer' && (
+          <AppText variant="muted" style={styles.originText}>
+            Destinatario leido por NFC
+          </AppText>
+        )}
         <TextField
           placeholder="Cantidad en COP"
           keyboardType="number-pad"
@@ -268,6 +337,7 @@ export function TransferScreen() {
                   destinationUsername: recipient.trim(),
                   amount: numAmount,
                   idempotencyKey,
+                  origin,
                 })
                 setConfirmedTransfer(result)
                 setStep('success')
@@ -377,5 +447,24 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: theme.spacing.lg,
     textAlign: 'center',
+  },
+  nfcStatusCard: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 28,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  nfcLoader: {
+    marginRight: theme.spacing.sm,
+  },
+  nfcStatusText: {
+    textAlign: 'center',
+    fontSize: theme.typography.small,
+  },
+  originText: {
+    textAlign: 'center',
+    marginBottom: theme.spacing.lg,
   },
 })
