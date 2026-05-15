@@ -83,6 +83,13 @@ Disallowed cross-module interaction:
 - bypassing application services to reuse internal helper functions;
 - sharing persistence models as domain models across modules.
 
+Read/query adapters may use cross-module SQL joins only to build denormalized
+read responses in the shared database monolith. These joins are not part of
+domain or application decision-making, must not mutate foreign module data, and
+must not enforce financial rules. If a cross-module read starts carrying
+business logic, write behavior, or extraction pressure, it should move behind an
+explicit query/read-model contract.
+
 Initial data ownership:
 
 - `auth` owns credentials, password hashing, and authentication state.
