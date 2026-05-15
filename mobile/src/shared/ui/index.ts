@@ -1,5 +1,6 @@
 export { AppButton } from './AppButton'
 export { AppText } from './AppText'
+export { BrandLogo } from './BrandLogo'
 export { ListScreen } from './ListScreen'
 export { Screen } from './Screen'
 export { TextField } from './TextField'
