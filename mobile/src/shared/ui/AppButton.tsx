@@ -2,7 +2,7 @@ import React from 'react'
 import { ActivityIndicator, Pressable, StyleProp, StyleSheet, Text, ViewStyle, GestureResponderEvent } from 'react-native'
 import { theme } from './theme'
 
-type ButtonVariant = 'primary' | 'secondary' | 'danger'
+type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
 
 type AppButtonProps = {
   title: string
@@ -17,11 +17,11 @@ const styles = StyleSheet.create({
   button: {
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.lg,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 48,
+    minHeight: 52,
     marginVertical: theme.spacing.sm,
   },
   primaryButton: {
@@ -40,13 +40,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: theme.colors.primaryTint,
     borderWidth: 1,
-    borderColor: theme.colors.primary,
+    borderColor: theme.colors.primaryTint,
   },
   secondaryButtonPressed: {
-    backgroundColor: theme.colors.primary,
-    opacity: 0.1,
+    backgroundColor: theme.colors.surfaceMuted,
   },
   secondaryButtonDisabled: {
     opacity: 0.5,
@@ -58,7 +57,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   dangerButton: {
-    backgroundColor: theme.colors.danger,
+    backgroundColor: theme.colors.dangerTint,
   },
   dangerButtonPressed: {
     backgroundColor: theme.colors.dangerPressed,
@@ -68,7 +67,18 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   dangerText: {
-    color: theme.colors.primaryText,
+    color: theme.colors.danger,
+    fontSize: theme.typography.body,
+    fontWeight: '600',
+  },
+  ghostButton: {
+    backgroundColor: 'transparent',
+  },
+  ghostButtonPressed: {
+    backgroundColor: theme.colors.surfaceMuted,
+  },
+  ghostText: {
+    color: theme.colors.primary,
     fontSize: theme.typography.body,
     fontWeight: '600',
   },
@@ -98,6 +108,9 @@ export function AppButton({
     if (variant === 'danger') {
       return [baseStyle, isDisabled ? styles.dangerButtonDisabled : styles.dangerButton]
     }
+    if (variant === 'ghost') {
+      return [baseStyle, styles.ghostButton, isDisabled && { opacity: 0.5 }]
+    }
     return baseStyle
   }
 
@@ -105,6 +118,7 @@ export function AppButton({
     if (variant === 'primary') return styles.primaryText
     if (variant === 'secondary') return styles.secondaryText
     if (variant === 'danger') return styles.dangerText
+    if (variant === 'ghost') return styles.ghostText
     return styles.primaryText
   }
 
@@ -117,8 +131,10 @@ export function AppButton({
             variant === 'primary'
               ? theme.colors.primaryPressed
               : variant === 'secondary'
-                ? 'rgba(37, 99, 235, 0.1)'
-                : theme.colors.dangerPressed,
+                ? theme.colors.surfaceMuted
+                : variant === 'ghost'
+                  ? theme.colors.surfaceMuted
+                  : theme.colors.dangerTint,
         },
         style,
       ]}

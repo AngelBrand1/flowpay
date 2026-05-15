@@ -19,7 +19,12 @@ export function Screen({ children, centered, keyboardAware, style, contentStyle 
       <KeyboardAvoidingView behavior={keyboardAware ? behavior : undefined} style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={[
-            { flexGrow: 1, paddingHorizontal: theme.spacing.lg },
+            {
+              flexGrow: 1,
+              paddingHorizontal: theme.spacing.lg,
+              paddingTop: theme.spacing.lg,
+              paddingBottom: theme.spacing.xl,
+            },
             centered && { justifyContent: 'center' },
           ]}
           scrollEnabled={keyboardAware}
