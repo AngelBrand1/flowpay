@@ -23,3 +23,7 @@ class WalletRepository(Protocol):
     def get_by_user_id(self, user_id: str) -> WalletRecord | None:
         """Get wallet by user ID."""
         ...
+
+    def lock_by_user_id(self, user_id: str) -> WalletRecord | None:
+        """Acquire SELECT ... FOR UPDATE on the user's wallet row."""
+        ...

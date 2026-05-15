@@ -10,6 +10,11 @@ from flowpay.wallets.adapters.wallet_repository import SQLAlchemyWalletRepositor
 from flowpay.wallets.application.wallet_service import WalletService
 from flowpay.ledger.adapters.ledger_repository import SQLAlchemyLedgerRepository
 from flowpay.ledger.application.ledger_service import LedgerService
+from flowpay.transfers.adapters.repositories import (
+    SQLAlchemyIdempotencyRepository,
+    SQLAlchemyTransferRepository,
+)
+from flowpay.transfers.application.transfer_service import TransferService
 
 
 def build_auth_service(db: Session) -> AuthService:
@@ -36,6 +41,15 @@ def build_ledger_service(db: Session) -> LedgerService:
     """Build and return a LedgerService instance."""
     ledger_repository = SQLAlchemyLedgerRepository(db)
     return LedgerService(ledger_repository)
+
+
+def build_transfer_service(db: Session) -> TransferService:
+    return TransferService(
+        transfer_repository=SQLAlchemyTransferRepository(db),
+        idempotency_repository=SQLAlchemyIdempotencyRepository(db),
+        wallet_service=build_wallet_service(db),
+        ledger_service=build_ledger_service(db),
+    )
 
 
 def build_registration_service(db: Session) -> RegistrationService:

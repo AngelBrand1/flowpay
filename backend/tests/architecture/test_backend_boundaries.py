@@ -256,3 +256,60 @@ def test_wallets_application_no_sqlalchemy():
 
         assert "from sqlalchemy" not in content
         assert "import sqlalchemy" not in content
+
+
+def test_transfers_application_no_fastapi():
+    """Test that transfers.application does not import FastAPI."""
+    backend_src = Path("/Users/angelbrand/Workspace/Personal/flowpay/backend/src")
+    transfers_app_dir = backend_src / "flowpay" / "transfers" / "application"
+
+    if not transfers_app_dir.exists():
+        return
+
+    for file_path in find_python_files(transfers_app_dir):
+        if "__pycache__" in file_path.parts or "__init__" in file_path.name:
+            continue
+
+        with open(file_path, "r") as f:
+            content = f.read()
+
+        assert "from fastapi" not in content
+        assert "import fastapi" not in content
+
+
+def test_transfers_application_no_sqlalchemy():
+    """Test that transfers.application does not import SQLAlchemy."""
+    backend_src = Path("/Users/angelbrand/Workspace/Personal/flowpay/backend/src")
+    transfers_app_dir = backend_src / "flowpay" / "transfers" / "application"
+
+    if not transfers_app_dir.exists():
+        return
+
+    for file_path in find_python_files(transfers_app_dir):
+        if "__pycache__" in file_path.parts or "__init__" in file_path.name:
+            continue
+
+        with open(file_path, "r") as f:
+            content = f.read()
+
+        assert "from sqlalchemy" not in content
+        assert "import sqlalchemy" not in content
+
+
+def test_transfers_does_not_import_wallets_adapters():
+    """Test that transfers module does not import flowpay.wallets.adapters."""
+    backend_src = Path("/Users/angelbrand/Workspace/Personal/flowpay/backend/src")
+    transfers_dir = backend_src / "flowpay" / "transfers"
+
+    if not transfers_dir.exists():
+        return
+
+    for file_path in find_python_files(transfers_dir):
+        if "__pycache__" in file_path.parts or "__init__" in file_path.name:
+            continue
+
+        with open(file_path, "r") as f:
+            content = f.read()
+
+        assert "from flowpay.wallets.adapters" not in content
+        assert "import flowpay.wallets.adapters" not in content

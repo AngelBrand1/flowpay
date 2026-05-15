@@ -51,3 +51,20 @@ class SQLAlchemyWalletRepository(WalletRepository):
             currency=wallet.currency,
             created_at=wallet.created_at,
         )
+
+    def lock_by_user_id(self, user_id: str) -> WalletRecord | None:
+        """Acquire SELECT ... FOR UPDATE on the user's wallet row."""
+        wallet = (
+            self.session.query(Wallet)
+            .filter(Wallet.user_id == user_id)
+            .with_for_update()
+            .first()
+        )
+        if wallet is None:
+            return None
+        return WalletRecord(
+            id=wallet.id,
+            user_id=wallet.user_id,
+            currency=wallet.currency,
+            created_at=wallet.created_at,
+        )

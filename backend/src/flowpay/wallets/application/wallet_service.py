@@ -50,3 +50,15 @@ class WalletService:
             currency=record.currency,
             created_at=record.created_at.isoformat(),
         )
+
+    def lock_by_user_id(self, user_id: str) -> WalletSummary | None:
+        """Lock the user's wallet row for the current transaction."""
+        record = self.repository.lock_by_user_id(user_id)
+        if record is None:
+            return None
+        return WalletSummary(
+            id=record.id,
+            user_id=record.user_id,
+            currency=record.currency,
+            created_at=record.created_at.isoformat(),
+        )
