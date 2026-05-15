@@ -327,6 +327,77 @@ def test_unknown_transfer_id_gets_404(client: TestClient):
 
 
 # ---------------------------------------------------------------------------
+# Username resolution tests
+# ---------------------------------------------------------------------------
+
+def test_create_transfer_by_username_returns_201(client: TestClient):
+    alice_data = _register(client, "alice_u1")
+    bob_data = _register(client, "bob_u1")
+    alice_token = _login(client, "alice_u1")
+
+    resp = _post_transfer(client, alice_token, {"destination_username": "bob_u1", "amount": 10_000})
+
+    assert resp.status_code == 201
+    t = resp.json()["transfer"]
+    assert t["id"].startswith("txop_")
+    assert t["source_wallet_id"] == alice_data["wallet"]["id"]
+    assert t["destination_wallet_id"] == bob_data["wallet"]["id"]
+    assert t["amount"] == 10_000
+    assert t["currency"] == "COP"
+    assert t["origin"] == "manual_transfer"
+    assert t["status"] == "completed"
+
+
+def test_create_transfer_destination_user_not_found_returns_404(client: TestClient):
+    _register(client, "alice_u2")
+    alice_token = _login(client, "alice_u2")
+
+    resp = _post_transfer(client, alice_token, {"destination_username": "nonexistent_user", "amount": 5_000})
+
+    assert resp.status_code == 404
+    assert resp.json()["error"]["code"] == "destination_user_not_found"
+
+
+def test_create_transfer_both_wallet_id_and_username_returns_400(client: TestClient):
+    alice_data = _register(client, "alice_u3")
+    bob_data = _register(client, "bob_u3")
+    alice_token = _login(client, "alice_u3")
+
+    resp = _post_transfer(
+        client, alice_token,
+        {"destination_wallet_id": bob_data["wallet"]["id"], "destination_username": "bob_u3", "amount": 5_000}
+    )
+
+    assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "invalid_request"
+
+
+def test_create_transfer_neither_wallet_id_nor_username_returns_400(client: TestClient):
+    _register(client, "alice_u4")
+    alice_token = _login(client, "alice_u4")
+
+    resp = _post_transfer(client, alice_token, {"amount": 5_000})
+
+    assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "invalid_request"
+
+
+def test_create_transfer_idempotency_works_with_username(client: TestClient):
+    _register(client, "alice_u5")
+    bob_data = _register(client, "bob_u5")
+    alice_token = _login(client, "alice_u5")
+
+    payload = {"destination_username": "bob_u5", "amount": 5_000}
+    r1 = _post_transfer(client, alice_token, payload, key="idem-username-001")
+    r2 = _post_transfer(client, alice_token, payload, key="idem-username-001")
+
+    assert r1.status_code == 201
+    assert r2.status_code == 201
+    assert r1.json() == r2.json()
+    assert r1.json()["transfer"]["destination_wallet_id"] == bob_data["wallet"]["id"]
+
+
+# ---------------------------------------------------------------------------
 # Concurrency test — must use independent DB sessions
 # ---------------------------------------------------------------------------
 

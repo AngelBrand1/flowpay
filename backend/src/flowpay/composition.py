@@ -31,6 +31,12 @@ def build_auth_service(db: Session) -> AuthService:
     )
 
 
+def build_user_service(db: Session) -> UserService:
+    """Build and return a UserService instance."""
+    user_repository = SQLAlchemyUserRepository(db)
+    return UserService(user_repository)
+
+
 def build_wallet_service(db: Session) -> WalletService:
     """Build and return a WalletService instance."""
     wallet_repository = SQLAlchemyWalletRepository(db)
@@ -47,6 +53,7 @@ def build_transfer_service(db: Session) -> TransferService:
     return TransferService(
         transfer_repository=SQLAlchemyTransferRepository(db),
         idempotency_repository=SQLAlchemyIdempotencyRepository(db),
+        user_service=build_user_service(db),
         wallet_service=build_wallet_service(db),
         ledger_service=build_ledger_service(db),
     )

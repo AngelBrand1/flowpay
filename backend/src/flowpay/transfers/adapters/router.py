@@ -17,8 +17,10 @@ router = APIRouter()
 _ERROR_STATUS = {
     "invalid_amount": 400,
     "same_wallet_transfer": 400,
+    "invalid_request": 400,
     "source_wallet_not_found": 404,
     "destination_wallet_not_found": 404,
+    "destination_user_not_found": 404,
     "transfer_not_found": 404,
     "insufficient_balance": 409,
     "idempotency_key_conflict": 409,
@@ -26,7 +28,8 @@ _ERROR_STATUS = {
 
 
 class CreateTransferRequest(BaseModel):
-    destination_wallet_id: str
+    destination_wallet_id: str | None = None
+    destination_username: str | None = None
     amount: int
     origin: str = "manual_transfer"
 
@@ -72,6 +75,7 @@ def create_transfer(
         summary = service.create_transfer(
             user_id=current_user_id,
             destination_wallet_id=body.destination_wallet_id,
+            destination_username=body.destination_username,
             amount=body.amount,
             origin=body.origin,
             idempotency_key=idempotency_key,

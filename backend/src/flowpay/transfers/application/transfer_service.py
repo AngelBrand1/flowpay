@@ -34,18 +34,21 @@ class TransferService:
         self,
         transfer_repository: TransferRepository,
         idempotency_repository: IdempotencyRepository,
+        user_service,
         wallet_service,
         ledger_service,
     ):
         self.transfer_repository = transfer_repository
         self.idempotency_repository = idempotency_repository
+        self.user_service = user_service
         self.wallet_service = wallet_service
         self.ledger_service = ledger_service
 
     def create_transfer(
         self,
         user_id: str,
-        destination_wallet_id: str,
+        destination_wallet_id: str | None,
+        destination_username: str | None,
         amount: int,
         origin: str,
         idempotency_key: str,
@@ -53,6 +56,32 @@ class TransferService:
     ) -> TransferSummary:
         if amount <= 0:
             raise TransferError(code="invalid_amount", message="Transfer amount must be positive")
+
+        # Validate exactly one destination field is provided
+        has_wallet_id = destination_wallet_id is not None
+        has_username = destination_username is not None
+
+        if not (has_wallet_id ^ has_username):  # XOR: exactly one must be true
+            raise TransferError(
+                code="invalid_request",
+                message="Exactly one of destination_wallet_id or destination_username must be provided",
+            )
+
+        # Resolve destination_wallet_id if username was provided
+        if has_username:
+            user = self.user_service.get_by_username(destination_username)
+            if user is None:
+                raise TransferError(
+                    code="destination_user_not_found",
+                    message=f"User '{destination_username}' not found",
+                )
+            user_wallet = self.wallet_service.get_by_user_id(user.id)
+            if user_wallet is None:
+                raise TransferError(
+                    code="destination_wallet_not_found",
+                    message=f"User '{destination_username}' has no wallet",
+                )
+            destination_wallet_id = user_wallet.id
 
         # Lock source wallet first — must happen before any balance reads
         source_wallet = self.wallet_service.lock_by_user_id(user_id)
