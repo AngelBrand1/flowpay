@@ -11,8 +11,8 @@ export function useWallet() {
 
   const errorMessage = error
     ? error.code === 'wallet_not_found'
-      ? 'Wallet not found'
-      : 'Error loading wallet. Please try again.'
+      ? 'No encontramos tu cuenta'
+      : 'No pudimos cargar tu cuenta. Intenta de nuevo.'
     : null
 
   return { wallet, isLoading, error: errorMessage, refetch }

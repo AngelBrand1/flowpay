@@ -38,7 +38,7 @@ export function TopUpScreen() {
       <Screen centered>
         <ActivityIndicator />
         <AppText variant="body" style={styles.loadingText}>
-          Processing top-up...
+          Recargando tu cuenta...
         </AppText>
       </Screen>
     )
@@ -47,17 +47,20 @@ export function TopUpScreen() {
   if (step === 'success' && confirmedTransaction) {
     return (
       <Screen centered>
+        <View style={styles.successBadge}>
+          <AppText style={styles.successBadgeText}>✓</AppText>
+        </View>
         <AppText variant="title" style={styles.successTitle}>
-          Top-up successful
+          Recarga lista
         </AppText>
         <View style={styles.detailCard}>
-          <AppText style={styles.label}>Amount loaded</AppText>
+          <AppText style={styles.label}>Agregaste</AppText>
           <AppText variant="subtitle" style={styles.value}>
             COP {formatAmount(confirmedTransaction.amount)}
           </AppText>
         </View>
         <AppButton
-          title="Back to my wallet"
+          title="Volver al inicio"
           onPress={() => navigation.navigate('Wallet')}
           style={styles.actionButton}
         />
@@ -68,14 +71,17 @@ export function TopUpScreen() {
   if (step === 'error') {
     return (
       <Screen centered>
-        <AppText variant="error" style={styles.errorTitle}>
-          Top-up error
+        <View style={styles.errorBadge}>
+          <AppText style={styles.errorBadgeText}>!</AppText>
+        </View>
+        <AppText variant="title" style={styles.errorTitle}>
+          No se pudo recargar
         </AppText>
         <AppText variant="body" style={styles.errorMessage}>
-          {error}
+          {error ?? 'Revisa el monto e intenta de nuevo.'}
         </AppText>
         <AppButton
-          title="Retry"
+          title="Intentar de nuevo"
           onPress={async () => {
             const numAmount = parseAmount(amount)
             if (numAmount === null) {
@@ -95,8 +101,8 @@ export function TopUpScreen() {
           style={styles.actionButton}
         />
         <AppButton
-          title="Cancel"
-          variant="secondary"
+          title="Volver al inicio"
+          variant="ghost"
           onPress={() => navigation.navigate('Wallet')}
         />
       </Screen>
@@ -107,10 +113,10 @@ export function TopUpScreen() {
     return (
       <Screen centered keyboardAware>
         <AppText variant="title" style={styles.stepTitle}>
-          How much do you want to load?
+          ¿Cuánto quieres recargar?
         </AppText>
         <TextField
-          placeholder="Amount in COP"
+          placeholder="Monto en pesos"
           keyboardType="number-pad"
           value={amount}
           onChangeText={(text) => {
@@ -125,11 +131,11 @@ export function TopUpScreen() {
           </AppText>
         )}
         <AppButton
-          title="Next"
+          title="Siguiente"
           onPress={() => {
             const parsedAmount = parseAmount(amount)
             if (parsedAmount === null || parsedAmount > MAX_TOPUP) {
-              setAmountError(`Enter an amount between 1 and ${formatAmount(MAX_TOPUP)} COP`)
+              setAmountError(`Ingresa un monto entre 1 y ${formatAmount(MAX_TOPUP)} COP`)
               return
             }
             setAmount(String(parsedAmount))
@@ -139,8 +145,8 @@ export function TopUpScreen() {
           style={styles.actionButton}
         />
         <AppButton
-          title="Cancel"
-          variant="secondary"
+          title="Cancelar"
+          variant="ghost"
           onPress={() => navigation.navigate('Wallet')}
         />
       </Screen>
@@ -153,9 +159,9 @@ export function TopUpScreen() {
       return (
         <Screen centered>
           <AppText variant="error" style={styles.errorMessage}>
-            Enter a valid quantity greater than 0
+            Ingresa un monto válido mayor a 0
           </AppText>
-          <AppButton title="Back to amount" onPress={() => setStep('amount')} />
+          <AppButton title="Volver al monto" onPress={() => setStep('amount')} />
         </Screen>
       )
     }
@@ -164,10 +170,10 @@ export function TopUpScreen() {
       <Screen centered contentStyle={styles.confirmContent}>
         <View>
           <AppText variant="title" style={styles.confirmTitle}>
-            Confirm your top-up
+            Confirma tu recarga
           </AppText>
           <View style={styles.confirmCard}>
-            <AppText style={styles.label}>Amount to load</AppText>
+            <AppText style={styles.label}>Vas a recargar</AppText>
             <AppText variant="subtitle" style={styles.value}>
               COP {formatAmount(numAmount)}
             </AppText>
@@ -176,7 +182,7 @@ export function TopUpScreen() {
 
         <View style={styles.actions}>
           <AppButton
-            title="Top up balance"
+            title="Recargar ahora"
             onPress={async () => {
               try {
                 const result = await submit(numAmount)
@@ -191,8 +197,8 @@ export function TopUpScreen() {
             style={styles.confirmButton}
           />
           <AppButton
-            title="Back"
-            variant="secondary"
+            title="Atrás"
+            variant="ghost"
             onPress={() => setStep('amount')}
             disabled={isLoading}
           />
@@ -206,7 +212,7 @@ export function TopUpScreen() {
 
 const styles = StyleSheet.create({
   stepTitle: {
-    marginBottom: theme.spacing.xxl,
+    marginBottom: theme.spacing.xl,
     textAlign: 'center',
   },
   actionButton: {
@@ -227,12 +233,10 @@ const styles = StyleSheet.create({
   },
   confirmCard: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
     borderRadius: theme.radius.lg,
     padding: theme.spacing.xl,
     marginBottom: theme.spacing.xxl,
-    alignItems: 'center',
+    ...theme.shadow.card,
   },
   label: {
     fontSize: theme.typography.small,
@@ -249,23 +253,50 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   successTitle: {
-    marginBottom: theme.spacing.xxl,
+    marginBottom: theme.spacing.xl,
     textAlign: 'center',
     color: theme.colors.success,
   },
+  successBadge: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: theme.colors.successTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  successBadgeText: {
+    color: theme.colors.success,
+    fontSize: 34,
+    fontWeight: '800',
+  },
   detailCard: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
     borderRadius: theme.radius.lg,
     padding: theme.spacing.xl,
     marginBottom: theme.spacing.xxl,
     width: '100%',
+    ...theme.shadow.card,
+  },
+  errorBadge: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: theme.colors.dangerTint,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  errorBadgeText: {
+    color: theme.colors.danger,
+    fontSize: 34,
+    fontWeight: '800',
   },
   errorTitle: {
     marginBottom: theme.spacing.lg,
     textAlign: 'center',
+    color: theme.colors.danger,
   },
   errorMessage: {
     marginBottom: theme.spacing.xl,

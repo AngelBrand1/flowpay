@@ -21,7 +21,7 @@ type TransactionHistoryNavigation = NativeStackNavigationProp<
 
 function formatAmount(amount: number, type: string): string {
   const sign = type === 'credit' ? '+' : '-'
-  return `${sign} COP ${amount.toLocaleString('es-CO')}`
+  return `${sign} ${amount.toLocaleString('es-CO')}`
 }
 
 function formatDate(iso: string): string {
@@ -35,11 +35,11 @@ function getLabel(tx: Transaction): string {
   if (tx.source === 'nfc_transfer' || tx.source === 'manual_transfer') {
     if (tx.counterparty?.username) {
       return tx.type === 'credit'
-        ? `Recibido de ${tx.counterparty.username}`
-        : `Enviado a ${tx.counterparty.username}`
+        ? `${tx.counterparty.username} te envió`
+        : `Enviaste a ${tx.counterparty.username}`
     }
   }
-  return tx.type === 'credit' ? 'Crédito' : 'Débito'
+  return tx.type === 'credit' ? 'Entrada de plata' : 'Salida de plata'
 }
 
 function TransactionItem({ item }: { item: Transaction }) {
@@ -70,9 +70,9 @@ function TransactionItem({ item }: { item: Transaction }) {
 }
 
 const FILTERS: { label: string; value: TransactionFilter }[] = [
-  { label: 'Todas', value: 'all' },
-  { label: 'Recibidas', value: 'credit' },
-  { label: 'Enviadas', value: 'debit' },
+  { label: 'Todo', value: 'all' },
+  { label: 'Entradas', value: 'credit' },
+  { label: 'Salidas', value: 'debit' },
 ]
 
 export function TransactionHistoryScreen() {
@@ -137,7 +137,7 @@ export function TransactionHistoryScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <AppText variant="muted" style={styles.emptyText}>
-              No tienes movimientos aún
+              Aún no tienes movimientos
             </AppText>
           </View>
         }
@@ -150,10 +150,13 @@ function Header({ onBack }: { onBack: () => void }) {
   return (
     <View style={styles.header}>
       <Pressable onPress={onBack} style={styles.backButton}>
-        <AppText style={styles.backText}>‹ Volver</AppText>
+        <AppText style={styles.backText}>‹ Inicio</AppText>
       </Pressable>
       <AppText variant="title" style={styles.title}>
-        Historial
+        Movimientos
+      </AppText>
+      <AppText variant="muted" style={styles.subtitle}>
+        Todo lo que entra y sale de tu cuenta.
       </AppText>
     </View>
   )
@@ -163,40 +166,46 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
+    paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.lg,
   },
   backButton: { marginBottom: theme.spacing.sm },
-  backText: { color: theme.colors.primary, fontSize: theme.typography.body },
+  backText: { color: theme.colors.primary, fontSize: theme.typography.body, fontWeight: '700' },
   title: {},
+  subtitle: { marginTop: theme.spacing.xs },
   filterRow: {
     flexDirection: 'row',
     paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
+    gap: theme.spacing.xs,
   },
   filterTab: {
-    paddingVertical: theme.spacing.xs,
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.radius.sm,
+    borderRadius: theme.radius.lg,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.primaryTint,
+    backgroundColor: theme.colors.surface,
   },
   filterTabActive: {
     backgroundColor: theme.colors.primary,
     borderColor: theme.colors.primary,
   },
-  filterLabel: { fontSize: theme.typography.small, color: theme.colors.mutedText },
+  filterLabel: { fontSize: theme.typography.small, color: theme.colors.mutedText, fontWeight: '700' },
   filterLabelActive: { color: theme.colors.primaryText, fontWeight: '600' },
   list: { paddingHorizontal: theme.spacing.lg, paddingBottom: theme.spacing.xxl },
   listEmpty: { flex: 1 },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    padding: theme.spacing.md,
+    borderRadius: theme.radius.lg,
+    backgroundColor: theme.colors.surface,
+    marginBottom: theme.spacing.sm,
     gap: theme.spacing.md,
+    ...theme.shadow.card,
   },
   iconBadge: {
     width: 40,
@@ -205,15 +214,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  creditBadge: { backgroundColor: '#dcfce7' },
-  debitBadge: { backgroundColor: '#fee2e2' },
+  creditBadge: { backgroundColor: theme.colors.successTint },
+  debitBadge: { backgroundColor: theme.colors.accentTint },
   iconText: { fontSize: 18, fontWeight: '700' },
   creditText: { color: theme.colors.success },
   debitText: { color: theme.colors.danger },
   itemInfo: { flex: 1 },
   itemLabel: { fontWeight: '500' },
   itemDate: { fontSize: theme.typography.small, marginTop: theme.spacing.xs },
-  itemAmount: { textAlign: 'right' },
+  itemAmount: { textAlign: 'right', minWidth: 88 },
   creditAmount: { color: theme.colors.success },
   debitAmount: { color: theme.colors.danger },
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center' },

@@ -16,11 +16,11 @@ function mapTransferError(error: unknown): string {
       case 'destination_user_not_found':
         return 'Usuario no encontrado'
       case 'destination_wallet_not_found':
-        return 'El destinatario no tiene una billetera disponible'
+        return 'La otra persona no tiene una cuenta disponible'
       case 'insufficient_balance':
         return 'Saldo insuficiente'
       case 'same_wallet_transfer':
-        return 'No puedes transferir a tu propia billetera'
+        return 'No puedes enviarte plata a ti mismo'
       case 'invalid_amount':
         return 'Cantidad inválida'
       case 'idempotency_key_conflict':
