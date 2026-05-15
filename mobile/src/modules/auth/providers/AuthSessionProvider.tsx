@@ -1,4 +1,6 @@
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
+import { getMe } from '../api/authApi'
+import { setUnauthenticatedHandler } from '../../../shared/api/unauthenticatedHandler'
 import type { User } from '../types'
 import {
   clearStoredAccessToken,
@@ -24,17 +26,24 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     let isMounted = true
 
-    getStoredAccessToken()
-      .then((storedToken) => {
+    async function restoreSession() {
+      const storedToken = await getStoredAccessToken()
+      if (!storedToken) return
+
+      try {
+        const me = await getMe()
         if (isMounted) {
           setAccessToken(storedToken)
+          setUser(me)
         }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsRestoringSession(false)
-        }
-      })
+      } catch {
+        await clearStoredAccessToken()
+      }
+    }
+
+    restoreSession().finally(() => {
+      if (isMounted) setIsRestoringSession(false)
+    })
 
     return () => {
       isMounted = false
@@ -52,6 +61,11 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
     setAccessToken(null)
     setUser(null)
   }, [])
+
+  useEffect(() => {
+    setUnauthenticatedHandler(logout)
+    return () => setUnauthenticatedHandler(() => {})
+  }, [logout])
 
   const value = useMemo<AuthSessionContextValue>(
     () => ({ user, accessToken, isRestoringSession, login, logout }),

@@ -1,6 +1,9 @@
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { ActivityIndicator, Text, View } from 'react-native'
+import { HomeScreen } from '../screens/HomeScreen'
+import { LoginScreen } from '../../modules/auth/screens/LoginScreen'
+import { RegisterScreen } from '../../modules/auth/screens/RegisterScreen'
 import { useAuthSession } from '../../modules/auth/hooks/useAuthSession'
 import type { ProtectedStackParamList, PublicStackParamList } from './types'
 
@@ -18,12 +21,8 @@ function PlaceholderScreen({ name }: { name: string }) {
 function PublicNavigator() {
   return (
     <PublicStack.Navigator screenOptions={{ headerShown: false }}>
-      <PublicStack.Screen name="Login">
-        {() => <PlaceholderScreen name="Login" />}
-      </PublicStack.Screen>
-      <PublicStack.Screen name="Register">
-        {() => <PlaceholderScreen name="Register" />}
-      </PublicStack.Screen>
+      <PublicStack.Screen name="Login" component={LoginScreen} />
+      <PublicStack.Screen name="Register" component={RegisterScreen} />
     </PublicStack.Navigator>
   )
 }
@@ -31,9 +30,7 @@ function PublicNavigator() {
 function ProtectedNavigator() {
   return (
     <ProtectedStack.Navigator>
-      <ProtectedStack.Screen name="Home">
-        {() => <PlaceholderScreen name="Home" />}
-      </ProtectedStack.Screen>
+      <ProtectedStack.Screen name="Home" component={HomeScreen} />
       <ProtectedStack.Screen name="Transfer">
         {() => <PlaceholderScreen name="Transfer" />}
       </ProtectedStack.Screen>
