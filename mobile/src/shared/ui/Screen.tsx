@@ -18,6 +18,7 @@ export function Screen({ children, centered, keyboardAware, style, contentStyle 
     <SafeAreaView style={[{ flex: 1, backgroundColor: theme.colors.background }, style]}>
       <KeyboardAvoidingView behavior={keyboardAware ? behavior : undefined} style={{ flex: 1 }}>
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={[
             {
               flexGrow: 1,
