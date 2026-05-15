@@ -18,7 +18,13 @@ export interface AuthSessionContextValue {
 
 export const AuthSessionContext = createContext<AuthSessionContextValue | null>(null)
 
-export function AuthSessionProvider({ children }: { children: React.ReactNode }) {
+interface AuthSessionProviderProps {
+  children: React.ReactNode
+  onLogin?: () => void
+  onLogout?: () => void
+}
+
+export function AuthSessionProvider({ children, onLogin, onLogout }: AuthSessionProviderProps) {
   const [user, setUser] = useState<User | null>(null)
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [isRestoringSession, setIsRestoringSession] = useState(true)
@@ -51,16 +57,18 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
   }, [])
 
   const login = useCallback(async (newAccessToken: string, newUser: User) => {
+    onLogin?.()
     await saveAccessToken(newAccessToken)
     setAccessToken(newAccessToken)
     setUser(newUser)
-  }, [])
+  }, [onLogin])
 
   const logout = useCallback(async () => {
     await clearStoredAccessToken()
     setAccessToken(null)
     setUser(null)
-  }, [])
+    onLogout?.()
+  }, [onLogout])
 
   useEffect(() => {
     setUnauthenticatedHandler(logout)

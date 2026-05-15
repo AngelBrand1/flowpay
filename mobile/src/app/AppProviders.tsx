@@ -9,9 +9,11 @@ registerAuthTokenProvider()
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient())
 
+  const clearCache = () => queryClient.clear()
+
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthSessionProvider>
+      <AuthSessionProvider onLogin={clearCache} onLogout={clearCache}>
         <NfcPresenceProvider>{children}</NfcPresenceProvider>
       </AuthSessionProvider>
     </QueryClientProvider>
