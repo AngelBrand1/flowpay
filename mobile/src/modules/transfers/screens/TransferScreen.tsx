@@ -67,6 +67,7 @@ export function TransferScreen() {
 
   useEffect(() => {
     if (step !== 'recipient' || recipient.trim()) {
+      resetNfcScan()
       return
     }
 
@@ -86,7 +87,7 @@ export function TransferScreen() {
     return () => {
       active = false
     }
-  }, [recipient, scanNfcRecipients, step])
+  }, [recipient, resetNfcScan, scanNfcRecipients, step])
 
   function resetTransferDraft() {
     setIdempotencyKey(createIdempotencyKey())
@@ -98,11 +99,14 @@ export function TransferScreen() {
   if (step === 'success' && confirmedTransfer) {
     return (
       <Screen centered>
+        <View style={styles.successBadge}>
+          <AppText style={styles.successBadgeText}>✓</AppText>
+        </View>
         <AppText variant="title" style={styles.successTitle}>
-          Transferencia exitosa
+          Plata enviada
         </AppText>
         <View style={styles.successDetails}>
-          <AppText style={styles.label}>Destinatario</AppText>
+          <AppText style={styles.label}>Para</AppText>
           <AppText variant="subtitle" style={styles.value}>
             {recipient}
           </AppText>
@@ -110,13 +114,12 @@ export function TransferScreen() {
           <AppText variant="subtitle" style={styles.value}>
             COP {formatAmount(confirmedTransfer.amount)}
           </AppText>
-          <AppText style={styles.label}>ID Operación</AppText>
-          <AppText style={styles.operationId}>
-            {confirmedTransfer.id.slice(0, 20)}...
+          <AppText variant="muted" style={styles.successHint}>
+            Puedes revisar esta transferencia en tus movimientos.
           </AppText>
         </View>
         <AppButton
-          title="Volver a mi billetera"
+          title="Volver al inicio"
           onPress={() => navigation.navigate('Wallet')}
           style={styles.actionButton}
         />
@@ -127,11 +130,14 @@ export function TransferScreen() {
   if (step === 'error') {
     return (
       <Screen centered>
-        <AppText variant="error" style={styles.errorTitle}>
-          Error en la transferencia
+        <View style={styles.errorBadge}>
+          <AppText style={styles.errorBadgeText}>!</AppText>
+        </View>
+        <AppText variant="title" style={styles.errorTitle}>
+          No se pudo enviar
         </AppText>
         <AppText variant="body" style={styles.errorMessage}>
-          {error}
+          {error ?? 'Revisa los datos e intenta de nuevo.'}
         </AppText>
         <AppButton
           title="Reintentar"
@@ -169,8 +175,8 @@ export function TransferScreen() {
           }}
         />
         <AppButton
-          title="Cancelar"
-          variant="secondary"
+          title="Volver al inicio"
+          variant="ghost"
           onPress={() => {
             resetTransferDraft()
             navigation.navigate('Wallet')
@@ -185,7 +191,7 @@ export function TransferScreen() {
       <Screen centered>
         <ActivityIndicator />
         <AppText variant="body" style={styles.loadingText}>
-          Procesando transferencia...
+          Enviando tu plata...
         </AppText>
       </Screen>
     )
@@ -194,11 +200,14 @@ export function TransferScreen() {
   if (step === 'recipient') {
     return (
       <Screen centered keyboardAware>
+        <AppText variant="muted" style={styles.stepEyebrow}>
+          Paso 1 de 3
+        </AppText>
         <AppText variant="title" style={styles.stepTitle}>
-          ¿A quién deseas transferir?
+          ¿A quién le vas a enviar?
         </AppText>
         <TextField
-          placeholder="Nombre de usuario del destinatario"
+          placeholder="Usuario de la persona"
           autoCapitalize="none"
           value={recipient}
           onChangeText={(text) => {
@@ -208,15 +217,12 @@ export function TransferScreen() {
           editable={!isLoading}
         />
         <View style={styles.nfcStatusCard}>
-          {nfcScanStatus === 'scanning' && <ActivityIndicator size="small" style={styles.nfcLoader} />}
           <AppText variant="muted" style={styles.nfcStatusText}>
-            {nfcScanStatus === 'scanning'
-              ? 'Leyendo por NFC'
-              : nfcScanStatus === 'found'
-                ? 'NFC detectado'
-                : nfcScanStatus === 'unavailable'
-                  ? 'NFC no disponible'
-                  : 'NFC activo'}
+            {nfcScanStatus === 'found'
+              ? 'Persona detectada por NFC'
+              : nfcScanStatus === 'unavailable'
+                ? 'NFC no disponible'
+                : 'O acerca el celular para detectar por NFC'}
           </AppText>
         </View>
         <AppButton
@@ -234,7 +240,7 @@ export function TransferScreen() {
         />
         <AppButton
           title="Cancelar"
-          variant="secondary"
+          variant="ghost"
           onPress={() => {
             resetTransferDraft()
             navigation.navigate('Wallet')
@@ -247,16 +253,19 @@ export function TransferScreen() {
   if (step === 'amount') {
     return (
       <Screen centered keyboardAware>
+        <AppText variant="muted" style={styles.stepEyebrow}>
+          Paso 2 de 3
+        </AppText>
         <AppText variant="title" style={styles.stepTitle}>
-          ¿Cuánto deseas transferir?
+          ¿Cuánto vas a enviar?
         </AppText>
         {origin === 'nfc_transfer' && (
           <AppText variant="muted" style={styles.originText}>
-            Destinatario leido por NFC
+            Persona detectada por NFC
           </AppText>
         )}
         <TextField
-          placeholder="Cantidad en COP"
+          placeholder="Monto en pesos"
           keyboardType="number-pad"
           value={amount}
           onChangeText={(text) => {
@@ -287,7 +296,7 @@ export function TransferScreen() {
         />
         <AppButton
           title="Atrás"
-          variant="secondary"
+          variant="ghost"
           onPress={() => setStep('recipient')}
         />
       </Screen>
@@ -310,11 +319,14 @@ export function TransferScreen() {
     return (
       <Screen centered contentStyle={styles.confirmContent}>
         <View>
+          <AppText variant="muted" style={styles.stepEyebrow}>
+            Paso 3 de 3
+          </AppText>
           <AppText variant="title" style={styles.confirmTitle}>
-            Confirma tu transferencia
+            Confirma el envío
           </AppText>
           <View style={styles.confirmCard}>
-            <AppText style={styles.label}>Destinatario</AppText>
+            <AppText style={styles.label}>Para</AppText>
             <AppText variant="subtitle" style={styles.value}>
               {recipient}
             </AppText>
@@ -323,14 +335,14 @@ export function TransferScreen() {
               COP {formatAmount(numAmount)}
             </AppText>
             <AppText style={styles.warning}>
-              Esta acción no se puede deshacer
+              Revisa bien. Después de enviar no se puede deshacer.
             </AppText>
           </View>
         </View>
 
         <View style={styles.actions}>
           <AppButton
-            title="Transferir"
+            title="Enviar ahora"
             onPress={async () => {
               try {
                 const result = await submit({
@@ -351,7 +363,7 @@ export function TransferScreen() {
           />
           <AppButton
             title="Atrás"
-            variant="secondary"
+            variant="ghost"
             onPress={() => {
               setIdempotencyKey(createIdempotencyKey())
               setStep('amount')
@@ -367,8 +379,15 @@ export function TransferScreen() {
 }
 
 const styles = StyleSheet.create({
+  stepEyebrow: {
+    color: theme.colors.primary,
+    fontSize: theme.typography.small,
+    fontWeight: '800',
+    marginBottom: theme.spacing.sm,
+    textAlign: 'center',
+  },
   stepTitle: {
-    marginBottom: theme.spacing.xxl,
+    marginBottom: theme.spacing.xl,
     textAlign: 'center',
   },
   actionButton: {
@@ -389,12 +408,10 @@ const styles = StyleSheet.create({
   },
   confirmCard: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
     borderRadius: theme.radius.lg,
     padding: theme.spacing.xl,
     marginBottom: theme.spacing.xxl,
-    alignItems: 'center',
+    ...theme.shadow.card,
   },
   label: {
     fontSize: theme.typography.small,
@@ -406,7 +423,10 @@ const styles = StyleSheet.create({
   },
   warning: {
     fontSize: theme.typography.small,
-    color: theme.colors.danger,
+    color: theme.colors.warning,
+    backgroundColor: theme.colors.warningTint,
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.md,
     marginTop: theme.spacing.md,
     fontWeight: '600',
   },
@@ -417,27 +437,53 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   successTitle: {
-    marginBottom: theme.spacing.xxl,
+    marginBottom: theme.spacing.xl,
     textAlign: 'center',
     color: theme.colors.success,
   },
+  successBadge: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: theme.colors.successTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  successBadgeText: {
+    color: theme.colors.success,
+    fontSize: 34,
+    fontWeight: '800',
+  },
   successDetails: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
     borderRadius: theme.radius.lg,
     padding: theme.spacing.xl,
     marginBottom: theme.spacing.xxl,
     width: '100%',
+    ...theme.shadow.card,
   },
-  operationId: {
-    fontSize: theme.typography.small,
-    color: theme.colors.mutedText,
-    fontFamily: 'monospace',
+  successHint: {
+    marginTop: theme.spacing.sm,
+  },
+  errorBadge: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: theme.colors.dangerTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  errorBadgeText: {
+    color: theme.colors.danger,
+    fontSize: 34,
+    fontWeight: '800',
   },
   errorTitle: {
     marginBottom: theme.spacing.lg,
     textAlign: 'center',
+    color: theme.colors.danger,
   },
   errorMessage: {
     marginBottom: theme.spacing.xl,
@@ -452,12 +498,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 28,
+    minHeight: 44,
+    borderRadius: theme.radius.lg,
+    backgroundColor: theme.colors.primaryTint,
+    paddingHorizontal: theme.spacing.md,
     marginTop: theme.spacing.sm,
-    marginBottom: theme.spacing.sm,
-  },
-  nfcLoader: {
-    marginRight: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
   },
   nfcStatusText: {
     textAlign: 'center',

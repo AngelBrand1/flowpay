@@ -63,10 +63,27 @@ export async function initNfcManager(): Promise<void> {
   await NfcManager.start()
 }
 
+export async function isNfcAvailable(): Promise<boolean> {
+  try {
+    const isSupported = await NfcManager.isSupported()
+    if (!isSupported) return false
+
+    await initNfcManager()
+    return NfcManager.isEnabled()
+  } catch {
+    return false
+  }
+}
+
 export async function scanHceRecipientPayload(
   timeoutMs = DEFAULT_SCAN_TIMEOUT_MS,
 ): Promise<NfcRecipientPayload> {
   try {
+    const nfcAvailable = await isNfcAvailable()
+    if (!nfcAvailable) {
+      throw new Error('flowpay_nfc_unavailable')
+    }
+
     await Promise.race([NfcManager.requestTechnology(NfcTech.IsoDep), rejectAfterTimeout(timeoutMs)])
     const response = await NfcManager.isoDepHandler.transceive(SELECT_APDU)
 
