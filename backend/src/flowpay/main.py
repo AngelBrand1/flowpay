@@ -3,11 +3,13 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from flowpay.auth.adapters.router import router as auth_router
+from flowpay.ledger.adapters.router import router as ledger_router
 from flowpay.shared.errors import FlowPayHTTPError
 
 app = FastAPI(title="FlowPay API", version="0.1.0")
 
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(ledger_router, tags=["wallet"])
 
 
 @app.get("/health")

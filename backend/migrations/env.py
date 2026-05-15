@@ -8,6 +8,7 @@ from flowpay.database import Base
 import flowpay.users.adapters.user_orm  # noqa: F401
 import flowpay.auth.adapters.credentials_orm  # noqa: F401
 import flowpay.wallets.adapters.wallet_orm  # noqa: F401
+import flowpay.ledger.adapters.ledger_orm  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", os.environ["DATABASE_URL"])
