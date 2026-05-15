@@ -1,7 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { ActivityIndicator, Text, View } from 'react-native'
-import { HomeScreen } from '../screens/HomeScreen'
+import { WalletScreen } from '../../modules/wallet/screens/WalletScreen'
 import { LoginScreen } from '../../modules/auth/screens/LoginScreen'
 import { RegisterScreen } from '../../modules/auth/screens/RegisterScreen'
 import { useAuthSession } from '../../modules/auth/hooks/useAuthSession'
@@ -30,7 +30,7 @@ function PublicNavigator() {
 function ProtectedNavigator() {
   return (
     <ProtectedStack.Navigator>
-      <ProtectedStack.Screen name="Home" component={HomeScreen} />
+      <ProtectedStack.Screen name="Wallet" component={WalletScreen} />
       <ProtectedStack.Screen name="Transfer">
         {() => <PlaceholderScreen name="Transfer" />}
       </ProtectedStack.Screen>

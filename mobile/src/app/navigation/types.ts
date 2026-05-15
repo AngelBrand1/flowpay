@@ -4,6 +4,6 @@ export type PublicStackParamList = {
 }
 
 export type ProtectedStackParamList = {
-  Home: undefined
+  Wallet: undefined
   Transfer: undefined
 }
