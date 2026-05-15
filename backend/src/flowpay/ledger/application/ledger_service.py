@@ -6,6 +6,8 @@ from flowpay.ledger.ports.ledger_repository import (
     TransactionRecord,
 )
 
+WELCOME_BONUS_AMOUNT = 50_000
+
 
 @dataclass
 class TransactionSummary:
@@ -32,18 +34,14 @@ class LedgerService:
     def __init__(self, repository: LedgerRepository):
         self.repository = repository
 
-    def record_welcome_bonus(
-        self,
-        wallet_id: str,
-        amount: int,
-    ) -> TransactionSummary:
+    def record_welcome_bonus(self, wallet_id: str) -> TransactionSummary:
         """Record the one-time wallet welcome bonus."""
         transaction_id = generate_id("txn_")
         record = self.repository.create_entry(
             transaction_id=transaction_id,
             wallet_id=wallet_id,
             type="credit",
-            amount=amount,
+            amount=WELCOME_BONUS_AMOUNT,
             source="welcome_bonus",
             operation_id=None,
             counterparty_wallet_id=None,

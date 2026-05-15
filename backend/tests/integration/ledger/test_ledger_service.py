@@ -36,7 +36,7 @@ def test_wallet(wallet_service: WalletService, test_user):
 
 
 def test_record_welcome_bonus_with_valid_data(ledger_service: LedgerService, test_wallet):
-    txn = ledger_service.record_welcome_bonus(test_wallet.id, amount=50_000)
+    txn = ledger_service.record_welcome_bonus(test_wallet.id)
 
     assert txn.id.startswith("txn_")
     assert txn.wallet_id == test_wallet.id
@@ -49,7 +49,7 @@ def test_record_welcome_bonus_with_valid_data(ledger_service: LedgerService, tes
 
 
 def test_calculate_balance_single_credit(ledger_service: LedgerService, test_wallet):
-    ledger_service.record_welcome_bonus(test_wallet.id, amount=50_000)
+    ledger_service.record_welcome_bonus(test_wallet.id)
 
     balance = ledger_service.get_wallet_balance(test_wallet.id)
 
@@ -67,7 +67,7 @@ def test_calculate_balance_credit_and_debit(
     other_user = user_service.create_user("other")
     other_wallet = wallet_service.create_wallet(other_user.id)
 
-    ledger_service.record_welcome_bonus(test_wallet.id, amount=50_000)
+    ledger_service.record_welcome_bonus(test_wallet.id)
     ledger_service.record_transfer_entries(
         operation_id="op_001",
         source_wallet_id=test_wallet.id,
@@ -94,7 +94,7 @@ def test_get_wallet_history_ordered_newest_first(
     other_user = user_service.create_user("other")
     other_wallet = wallet_service.create_wallet(other_user.id)
 
-    ledger_service.record_welcome_bonus(test_wallet.id, amount=50_000)
+    ledger_service.record_welcome_bonus(test_wallet.id)
     ledger_service.record_transfer_entries(
         operation_id="op_001",
         source_wallet_id=test_wallet.id,
@@ -171,18 +171,26 @@ def test_transaction_with_counterparty_resolves_username(
 
 
 def test_amount_must_be_positive(ledger_service: LedgerService, test_wallet, db: Session):
+    repo = SQLAlchemyLedgerRepository(db)
     with pytest.raises(IntegrityError):
-        ledger_service.record_welcome_bonus(test_wallet.id, amount=-100)
+        repo.create_entry(
+            transaction_id="txn_neg",
+            wallet_id=test_wallet.id,
+            type="credit",
+            amount=-100,
+            source="welcome_bonus",
+            operation_id=None,
+        )
         db.flush()
 
 
 def test_welcome_bonus_can_only_be_recorded_once_per_wallet(
     ledger_service: LedgerService, test_wallet, db: Session
 ):
-    ledger_service.record_welcome_bonus(test_wallet.id, amount=50_000)
+    ledger_service.record_welcome_bonus(test_wallet.id)
 
     with pytest.raises(IntegrityError):
-        ledger_service.record_welcome_bonus(test_wallet.id, amount=50_000)
+        ledger_service.record_welcome_bonus(test_wallet.id)
         db.flush()
 
 

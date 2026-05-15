@@ -8,11 +8,11 @@ from flowpay.wallets.adapters.wallet_repository import SQLAlchemyWalletRepositor
 from flowpay.wallets.application.wallet_service import WalletService
 
 
-def _register_and_login(client: TestClient, username: str, password: str = "password123") -> str:
-    """Register a user and return a JWT token."""
-    client.post("/auth/register", json={"username": username, "password": password})
-    resp = client.post("/auth/login", json={"username": username, "password": password})
-    return resp.json()["access_token"]
+def _register_and_get(client: TestClient, username: str, password: str = "password123") -> tuple[str, str]:
+    """Register a user and return (access_token, wallet_id)."""
+    reg_resp = client.post("/auth/register", json={"username": username, "password": password})
+    login_resp = client.post("/auth/login", json={"username": username, "password": password})
+    return login_resp.json()["access_token"], reg_resp.json()["wallet"]["id"]
 
 
 def _create_wallet_for_user(db: Session, user_id: str) -> str:
@@ -22,27 +22,8 @@ def _create_wallet_for_user(db: Session, user_id: str) -> str:
     return wallet.id
 
 
-def _credit_wallet(db: Session, wallet_id: str, amount: int, source: str = "welcome_bonus", op_id=None):
-    """Directly add a credit entry to a wallet."""
-    repo = SQLAlchemyLedgerRepository(db)
-    repo.create_entry(
-        transaction_id=f"txn_test_{wallet_id}_{amount}",
-        wallet_id=wallet_id,
-        type="credit",
-        amount=amount,
-        source=source,
-        operation_id=op_id,
-    )
-
-
 def test_get_wallet_returns_200_with_balance(client: TestClient, db: Session):
-    token = _register_and_login(client, "alice")
-
-    from flowpay.users.adapters.user_orm import User
-    user = db.query(User).filter(User.username == "alice").first()
-    wallet_id = _create_wallet_for_user(db, user.id)
-    _credit_wallet(db, wallet_id, 50_000)
-    db.flush()
+    token, wallet_id = _register_and_get(client, "alice")
 
     resp = client.get("/wallet", headers={"Authorization": f"Bearer {token}"})
 
@@ -60,7 +41,14 @@ def test_get_wallet_requires_authentication(client: TestClient):
 
 
 def test_get_wallet_not_found_returns_404(client: TestClient, db: Session):
-    token = _register_and_login(client, "bob")
+    # Create user+credentials directly (no wallet) to test the 404 case.
+    from flowpay.composition import build_auth_service
+
+    build_auth_service(db).register("bob", "password123")
+    db.flush()
+
+    login_resp = client.post("/auth/login", json={"username": "bob", "password": "password123"})
+    token = login_resp.json()["access_token"]
 
     resp = client.get("/wallet", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 404
@@ -68,19 +56,16 @@ def test_get_wallet_not_found_returns_404(client: TestClient, db: Session):
 
 
 def test_get_wallet_transactions_returns_history(client: TestClient, db: Session):
-    token = _register_and_login(client, "carol")
-
-    from flowpay.users.adapters.user_orm import User
-    user = db.query(User).filter(User.username == "carol").first()
-    wallet_id = _create_wallet_for_user(db, user.id)
-
-    ledger_service = LedgerService(SQLAlchemyLedgerRepository(db))
-    ledger_service.record_welcome_bonus(wallet_id, amount=50_000)
+    # Registration creates 1 welcome_bonus txn; 4 outgoing transfers = 5 total.
+    token, wallet_id = _register_and_get(client, "carol")
 
     from flowpay.users.adapters.user_repository import SQLAlchemyUserRepository
     from flowpay.users.application.user_service import UserService
+
     other_user = UserService(SQLAlchemyUserRepository(db)).create_user("carol_other")
     other_wallet_id = _create_wallet_for_user(db, other_user.id)
+
+    ledger_service = LedgerService(SQLAlchemyLedgerRepository(db))
     for i in range(4):
         ledger_service.record_transfer_entries(
             operation_id=f"op_{i:03d}",
@@ -99,14 +84,12 @@ def test_get_wallet_transactions_returns_history(client: TestClient, db: Session
 
 
 def test_get_wallet_transactions_respects_limit(client: TestClient, db: Session):
-    token = _register_and_login(client, "dave")
-
-    from flowpay.users.adapters.user_orm import User
-    user = db.query(User).filter(User.username == "dave").first()
-    wallet_id = _create_wallet_for_user(db, user.id)
+    # 1 welcome_bonus + 20 incoming transfers = 21 total; limit=10 returns 10.
+    token, wallet_id = _register_and_get(client, "dave")
 
     from flowpay.users.adapters.user_repository import SQLAlchemyUserRepository
     from flowpay.users.application.user_service import UserService
+
     other_user = UserService(SQLAlchemyUserRepository(db)).create_user("dave_other")
     other_wallet_id = _create_wallet_for_user(db, other_user.id)
 
@@ -130,19 +113,17 @@ def test_get_wallet_transactions_respects_limit(client: TestClient, db: Session)
 
 
 def test_get_wallet_transactions_accepts_cursor(client: TestClient, db: Session):
-    token = _register_and_login(client, "eve")
-
-    from flowpay.users.adapters.user_orm import User
-    user = db.query(User).filter(User.username == "eve").first()
-    wallet_id = _create_wallet_for_user(db, user.id)
+    # 1 welcome_bonus + 14 incoming transfers = 15 total; page1=10, page2=5.
+    token, wallet_id = _register_and_get(client, "eve")
 
     from flowpay.users.adapters.user_repository import SQLAlchemyUserRepository
     from flowpay.users.application.user_service import UserService
+
     other_user = UserService(SQLAlchemyUserRepository(db)).create_user("eve_other")
     other_wallet_id = _create_wallet_for_user(db, other_user.id)
 
     ledger_service = LedgerService(SQLAlchemyLedgerRepository(db))
-    for i in range(15):
+    for i in range(14):
         ledger_service.record_transfer_entries(
             operation_id=f"op_{i:03d}",
             source_wallet_id=other_wallet_id,
@@ -167,12 +148,7 @@ def test_get_wallet_transactions_accepts_cursor(client: TestClient, db: Session)
 
 
 def test_get_wallet_transactions_rejects_invalid_cursor(client: TestClient, db: Session):
-    token = _register_and_login(client, "frank")
-
-    from flowpay.users.adapters.user_orm import User
-    user = db.query(User).filter(User.username == "frank").first()
-    _create_wallet_for_user(db, user.id)
-    db.flush()
+    token, _ = _register_and_get(client, "frank")
 
     resp = client.get("/wallet/transactions?cursor=invalid", headers={"Authorization": f"Bearer {token}"})
 

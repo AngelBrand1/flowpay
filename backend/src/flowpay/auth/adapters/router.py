@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from flowpay.auth.adapters.dependencies import get_current_user_id
 from flowpay.auth.application.auth_service import InvalidCredentialsError
-from flowpay.composition import build_auth_service
+from flowpay.composition import build_auth_service, build_registration_service
 from flowpay.database import get_db
 from flowpay.shared.errors import FlowPayHTTPError
 from flowpay.users.application.user_service import UsernameAlreadyExistsError
@@ -22,8 +22,15 @@ class RegisterRequest(BaseModel):
     password: str
 
 
+class WalletRegistrationResponse(BaseModel):
+    id: str
+    currency: str
+    balance: int
+
+
 class RegisterResponse(BaseModel):
     user: UserResponse
+    wallet: WalletRegistrationResponse
 
 
 class LoginRequest(BaseModel):
@@ -47,10 +54,9 @@ def register(
     request: RegisterRequest,
     db: Session = Depends(get_db),
 ) -> RegisterResponse:
-    """Register a new user."""
-    auth_service = build_auth_service(db)
+    registration_service = build_registration_service(db)
     try:
-        user_summary = auth_service.register(request.username, request.password)
+        summary = registration_service.register(request.username, request.password)
     except UsernameAlreadyExistsError:
         raise FlowPayHTTPError(
             code="username_already_exists",
@@ -58,7 +64,12 @@ def register(
             status_code=409,
         )
     return RegisterResponse(
-        user=UserResponse(id=user_summary.id, username=user_summary.username)
+        user=UserResponse(id=summary.user_id, username=summary.username),
+        wallet=WalletRegistrationResponse(
+            id=summary.wallet.id,
+            currency=summary.wallet.currency,
+            balance=summary.wallet.balance,
+        ),
     )
 
 

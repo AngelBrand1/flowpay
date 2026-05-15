@@ -1,8 +1,7 @@
 from fastapi.testclient import TestClient
 
 
-def test_register_returns_201_and_persists_user(client: TestClient):
-    """Test that register returns 201 and persists both user and credential rows."""
+def test_register_returns_201_with_user_and_wallet(client: TestClient):
     response = client.post(
         "/auth/register",
         json={"username": "alice", "password": "password123"},
@@ -10,9 +9,11 @@ def test_register_returns_201_and_persists_user(client: TestClient):
 
     assert response.status_code == 201
     data = response.json()
-    assert "user" in data
     assert data["user"]["username"] == "alice"
     assert data["user"]["id"].startswith("usr_")
+    assert data["wallet"]["id"].startswith("wal_")
+    assert data["wallet"]["currency"] == "COP"
+    assert data["wallet"]["balance"] == 50_000
 
 
 def test_stored_password_hash_is_not_plain_text(client: TestClient, db):
@@ -76,3 +77,38 @@ def test_request_transaction_commits_on_success(client: TestClient, db):
 
     user = db.query(User).filter(User.username == "alice").first()
     assert user is not None
+
+
+def test_register_creates_wallet_persisted_in_db(client: TestClient, db):
+    client.post(
+        "/auth/register",
+        json={"username": "alice", "password": "password123"},
+    )
+
+    from flowpay.users.adapters.user_orm import User
+    from flowpay.wallets.adapters.wallet_orm import Wallet
+
+    user = db.query(User).filter(User.username == "alice").first()
+    wallet = db.query(Wallet).filter(Wallet.user_id == user.id).first()
+    assert wallet is not None
+    assert wallet.currency == "COP"
+
+
+def test_register_records_welcome_bonus_in_ledger(client: TestClient, db):
+    client.post(
+        "/auth/register",
+        json={"username": "alice", "password": "password123"},
+    )
+
+    from flowpay.ledger.adapters.ledger_orm import LedgerTransaction
+    from flowpay.users.adapters.user_orm import User
+    from flowpay.wallets.adapters.wallet_orm import Wallet
+
+    user = db.query(User).filter(User.username == "alice").first()
+    wallet = db.query(Wallet).filter(Wallet.user_id == user.id).first()
+    txn = db.query(LedgerTransaction).filter(LedgerTransaction.wallet_id == wallet.id).first()
+
+    assert txn is not None
+    assert txn.type == "credit"
+    assert txn.source == "welcome_bonus"
+    assert txn.amount == 50_000
