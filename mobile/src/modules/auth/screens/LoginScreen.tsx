@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from 'react-native'
+import { StyleSheet } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { PublicStackParamList } from '../../../app/navigation/types'
+import { Screen, AppText, TextField, AppButton, theme } from '../../../shared/ui'
 import { useLogin } from '../hooks/useLogin'
 
 type Nav = NativeStackNavigationProp<PublicStackParamList, 'Login'>
@@ -14,37 +15,32 @@ export function LoginScreen() {
   const { submit, isLoading, error } = useLogin()
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>FlowPay</Text>
-      <TextInput
-        style={styles.input}
+    <Screen centered keyboardAware>
+      <AppText variant="title" style={styles.title}>
+        FlowPay
+      </AppText>
+      <TextField
         placeholder="Usuario"
         autoCapitalize="none"
         value={username}
         onChangeText={setUsername}
+        editable={!isLoading}
       />
-      <TextInput
-        style={styles.input}
+      <TextField
         placeholder="Contraseña"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
+        editable={!isLoading}
       />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      {isLoading ? (
-        <ActivityIndicator style={styles.action} />
-      ) : (
-        <Button title="Entrar" onPress={() => submit(username, password)} />
-      )}
-      <Button title="Crear cuenta" onPress={() => navigation.navigate('Register')} />
-    </View>
+      {error ? <AppText variant="error">{error}</AppText> : null}
+      <AppButton title="Entrar" onPress={() => submit(username, password)} loading={isLoading} style={styles.action} />
+      <AppButton title="Crear cuenta" variant="secondary" onPress={() => navigation.navigate('Register')} />
+    </Screen>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24 },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 32, textAlign: 'center' },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginBottom: 12 },
-  error: { color: 'red', marginBottom: 12 },
-  action: { marginVertical: 8 },
+  title: { marginBottom: theme.spacing.xxl, textAlign: 'center' },
+  action: { marginVertical: theme.spacing.md },
 })
