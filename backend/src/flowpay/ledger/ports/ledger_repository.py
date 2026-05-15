@@ -54,8 +54,9 @@ class LedgerRepository(Protocol):
         wallet_id: str,
         limit: int = 50,
         offset: int = 0,
+        transaction_type: str | None = None,
     ) -> list[TransactionWithCounterparty]:
-        """Get transactions for a wallet, ordered newest-first."""
+        """Get transactions for a wallet, ordered newest-first, optionally filtered by type."""
         ...
 
     def calculate_balance(self, wallet_id: str) -> int:

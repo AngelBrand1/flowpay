@@ -58,9 +58,10 @@ class SQLAlchemyLedgerRepository(LedgerRepository):
         wallet_id: str,
         limit: int = 50,
         offset: int = 0,
+        transaction_type: str | None = None,
     ) -> list[TransactionWithCounterparty]:
         CounterpartyWallet = aliased(Wallet)
-        rows = (
+        query = (
             self.session.query(LedgerTransaction, User.username)
             .outerjoin(
                 CounterpartyWallet,
@@ -68,6 +69,12 @@ class SQLAlchemyLedgerRepository(LedgerRepository):
             )
             .outerjoin(User, CounterpartyWallet.user_id == User.id)
             .filter(LedgerTransaction.wallet_id == wallet_id)
+        )
+        if transaction_type is not None:
+            query = query.filter(LedgerTransaction.type == transaction_type)
+
+        rows = (
+            query
             .order_by(desc(LedgerTransaction.created_at), desc(LedgerTransaction.id))
             .limit(limit)
             .offset(offset)

@@ -110,9 +110,12 @@ class LedgerService:
         wallet_id: str,
         limit: int = 50,
         offset: int = 0,
+        transaction_type: str | None = None,
     ) -> list[TransactionSummary]:
-        """Get transaction history for a wallet."""
-        records = self.repository.get_by_wallet_id(wallet_id, limit, offset)
+        """Get transaction history for a wallet, optionally filtered by type."""
+        records = self.repository.get_by_wallet_id(
+            wallet_id, limit, offset, transaction_type=transaction_type
+        )
         return [
             TransactionSummary(
                 id=record.id,

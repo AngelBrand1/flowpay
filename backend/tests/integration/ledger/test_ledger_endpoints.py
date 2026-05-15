@@ -154,3 +154,90 @@ def test_get_wallet_transactions_rejects_invalid_cursor(client: TestClient, db: 
 
     assert resp.status_code == 400
     assert resp.json()["error"]["code"] == "invalid_cursor"
+
+
+def test_get_wallet_transactions_filters_by_type_credit(client: TestClient, db: Session):
+    # 1 welcome_bonus + 3 outgoing transfers + 2 incoming transfers = 6 total;
+    # credit (incoming + bonus) = 3; debit (outgoing) = 3.
+    token, wallet_id = _register_and_get(client, "grace")
+
+    from flowpay.users.adapters.user_repository import SQLAlchemyUserRepository
+    from flowpay.users.application.user_service import UserService
+
+    other_user = UserService(SQLAlchemyUserRepository(db)).create_user("grace_other")
+    other_wallet_id = _create_wallet_for_user(db, other_user.id)
+
+    ledger_service = LedgerService(SQLAlchemyLedgerRepository(db))
+    for i in range(3):
+        ledger_service.record_transfer_entries(
+            operation_id=f"out_{i}",
+            source_wallet_id=wallet_id,
+            destination_wallet_id=other_wallet_id,
+            amount=1_000,
+            source="manual_transfer",
+        )
+    for i in range(2):
+        ledger_service.record_transfer_entries(
+            operation_id=f"in_{i}",
+            source_wallet_id=other_wallet_id,
+            destination_wallet_id=wallet_id,
+            amount=1_000,
+            source="manual_transfer",
+        )
+    db.flush()
+
+    resp = client.get("/wallet/transactions?type=credit", headers={"Authorization": f"Bearer {token}"})
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data["transactions"]) == 3
+    for txn in data["transactions"]:
+        assert txn["type"] == "credit"
+
+
+def test_get_wallet_transactions_filters_by_type_debit(client: TestClient, db: Session):
+    # 1 welcome_bonus + 3 outgoing transfers + 2 incoming transfers = 6 total;
+    # credit (incoming + bonus) = 3; debit (outgoing) = 3.
+    token, wallet_id = _register_and_get(client, "henry")
+
+    from flowpay.users.adapters.user_repository import SQLAlchemyUserRepository
+    from flowpay.users.application.user_service import UserService
+
+    other_user = UserService(SQLAlchemyUserRepository(db)).create_user("henry_other")
+    other_wallet_id = _create_wallet_for_user(db, other_user.id)
+
+    ledger_service = LedgerService(SQLAlchemyLedgerRepository(db))
+    for i in range(3):
+        ledger_service.record_transfer_entries(
+            operation_id=f"out_{i}",
+            source_wallet_id=wallet_id,
+            destination_wallet_id=other_wallet_id,
+            amount=1_000,
+            source="manual_transfer",
+        )
+    for i in range(2):
+        ledger_service.record_transfer_entries(
+            operation_id=f"in_{i}",
+            source_wallet_id=other_wallet_id,
+            destination_wallet_id=wallet_id,
+            amount=1_000,
+            source="manual_transfer",
+        )
+    db.flush()
+
+    resp = client.get("/wallet/transactions?type=debit", headers={"Authorization": f"Bearer {token}"})
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data["transactions"]) == 3
+    for txn in data["transactions"]:
+        assert txn["type"] == "debit"
+
+
+def test_get_wallet_transactions_rejects_invalid_type(client: TestClient, db: Session):
+    token, _ = _register_and_get(client, "iris")
+
+    resp = client.get("/wallet/transactions?type=invalid", headers={"Authorization": f"Bearer {token}"})
+
+    assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "invalid_type"

@@ -69,6 +69,7 @@ def get_wallet_transactions(
     db: Session = Depends(get_db),
     limit: int = Query(50, ge=1, le=100),
     cursor: str | None = Query(None),
+    type: str | None = Query(None),
 ) -> WalletHistoryResponse:
     wallet_service = build_wallet_service(db)
     ledger_service = build_ledger_service(db)
@@ -79,6 +80,13 @@ def get_wallet_transactions(
             code="wallet_not_found",
             message="Wallet not found",
             status_code=404,
+        )
+
+    if type is not None and type not in ("credit", "debit"):
+        raise FlowPayHTTPError(
+            code="invalid_type",
+            message="Type must be 'credit' or 'debit'",
+            status_code=400,
         )
 
     offset = 0
@@ -102,6 +110,7 @@ def get_wallet_transactions(
         wallet_summary.id,
         limit=limit,
         offset=offset,
+        transaction_type=type,
     )
 
     transaction_responses = []
