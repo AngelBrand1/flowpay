@@ -1,4 +1,4 @@
 interface:
   display_name: "Architecture Advisor"
-  short_description: "Research-backed architecture decisions"
-  default_prompt: "Use $architecture-advisor to research prior art and evaluate an architectural decision with evidence, tradeoffs, scaling implications, and a recommended path."
+  short_description: "Durable, evidence-backed architecture"
+  default_prompt: "Use $architecture-advisor to research prior art and evaluate an architectural decision with evidence, tradeoffs, clean MVP boundaries, scaling implications, and a recommended path."

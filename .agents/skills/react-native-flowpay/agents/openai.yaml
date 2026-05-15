@@ -1,4 +1,4 @@
 interface:
   display_name: "React Native FlowPay"
-  short_description: "Mobile patterns for FlowPay"
-  default_prompt: "Use $react-native-flowpay to implement or review a FlowPay mobile change with React Native, Expo development builds, secure storage, API boundaries, and NFC constraints."
+  short_description: "Idiomatic mobile boundaries"
+  default_prompt: "Use $react-native-flowpay to implement or review a FlowPay mobile change with React Native, Expo development builds, secure storage, typed navigation, API boundaries, idiomatic feature-based structure, and NFC constraints."

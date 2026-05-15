@@ -27,11 +27,14 @@ The first version is Android-first.
 
 The project will not rely on Expo Go for NFC development or testing because NFC requires native capabilities and configuration that are outside a pure Expo Go workflow.
 
-The app will be organized by feature modules with clean internal boundaries:
+The app will be organized by feature modules with clean internal boundaries using React Native idioms rather than a strict backend-style hexagonal layout:
 
 ```text
 mobile/
   src/
+    app/
+      AppProviders.tsx
+      navigation/
     modules/
       auth/
       wallet/
@@ -39,31 +42,35 @@ mobile/
       nfc/
     shared/
       api/
-      navigation/
-      storage/
       ui/
 ```
 
-Each module may use:
+Modules should start with the smallest folder set that matches real code:
 
 ```text
 module/
-  presentation/
-  application/
-  domain/
-  infrastructure/
+  screens/
+  components/
+  hooks/
+  api/
+  storage/
+  adapters/
+  types.ts
 ```
 
 Where:
 
-- `presentation` owns screens and UI components.
-- `application` owns user flows and use-case orchestration.
-- `domain` owns local concepts and safe client-side validations.
-- `infrastructure` owns API clients, local storage, native adapters, and platform integrations.
+- `screens` owns route-level UI.
+- `components` owns module-local UI components.
+- `hooks` owns reusable UI/session/flow behavior exposed to screens.
+- `api` owns backend calls for that module.
+- `storage` owns local or secure storage for that module.
+- `adapters` owns native or external integrations such as NFC.
+- `types.ts` owns simple local TypeScript contracts.
 
-This structure intentionally extends the simpler `data/domain/presentation` split commonly seen in React Native projects. `infrastructure` is used instead of `data` because not every external dependency is data access; NFC, secure storage, device capability checks, and API clients are all infrastructure concerns.
+Formal clean-architecture folders such as `application`, `domain`, or `infrastructure` may be introduced inside a module when complexity justifies them, especially for transfers or NFC. They are not the default scaffold because frontend modules often remain clearer with conventional React Native names.
 
-React hooks are not considered domain objects. Hooks may coordinate UI behavior or call application services, but the domain layer must remain independent from React.
+React hooks are not domain objects. Hooks may coordinate UI behavior or call API/adapters, but financial authority remains on the backend.
 
 ## Rationale
 
@@ -94,7 +101,7 @@ The app can help the user select a recipient, enter an amount, and confirm the t
 
 ### NFC Boundary
 
-NFC is treated as an infrastructure adapter.
+NFC is treated as a native adapter inside the NFC module.
 
 The NFC module may:
 
@@ -152,6 +159,12 @@ Flutter is a capable mobile framework, but it does not align with the goal of st
 
 The app may keep local UI state and cache server responses for user experience.
 
+State ownership is split into three categories:
+
+- Server state is managed with TanStack Query.
+- Auth/session state is managed by the auth module provider and secure token storage.
+- Screen-local UI state is managed with local React state or module hooks.
+
 Server state examples:
 
 - authenticated user summary;
@@ -160,6 +173,15 @@ Server state examples:
 - transfer result;
 - recipient data.
 
+Any cached financial data must be treated as display data, not authority.
+
+Auth/session state examples:
+
+- presence of a local access token;
+- restore-session loading state;
+- login and logout actions;
+- authenticated user summary after it is fetched from the backend.
+
 Local-only state examples:
 
 - currently typed amount;
@@ -167,9 +189,9 @@ Local-only state examples:
 - NFC scan status;
 - loading and error UI state.
 
-Any cached financial data must be treated as display data, not authority.
-
 Global client state libraries may be used only when they simplify UI/session coordination. They must not become the source of truth for balances, transaction history, or transfer validity.
+
+The first version should not introduce Redux or Zustand. Reconsider a global client-state library only if shared non-server UI state becomes difficult to manage with module hooks and local state.
 
 ## NFC Capability Policy
 
@@ -189,6 +211,7 @@ NFC beta is intended for trusted face-to-face transfers and must be presented wi
 - Avoids relying on Expo Go for a native feature.
 - Keeps a future path to iOS.
 - Preserves backend as financial authority.
+- Uses React Native folder names that are easier to learn and maintain than backend-style layers.
 
 ### Negative
 
@@ -196,18 +219,20 @@ NFC beta is intended for trusted face-to-face transfers and must be presented wi
 - Requires validating NFC behavior on real Android hardware.
 - Requires managing native configuration through Expo prebuild/CNG.
 - Adds React Native and Python as separate language ecosystems if the backend uses FastAPI.
+- Requires discipline so feature folders do not become unstructured bags of hooks, screens, and adapters.
 
 ## Guardrails
 
-- NFC code must live behind an infrastructure adapter.
-- Transfer screens must call transfer application flows, not NFC internals.
-- API clients must be isolated under infrastructure/shared API boundaries.
-- React hooks must not be placed in the domain layer.
+- NFC code must live behind a module adapter, not directly inside screens.
+- Transfer screens must call transfer module hooks/services, not NFC internals.
+- API calls must be isolated under module `api/` or `shared/api/`, not scattered through screens.
 - Auth token storage must use secure storage, not plain async storage.
+- Auth token storage must be hidden behind the auth module's `storage/` boundary.
 - Client state stores must not be treated as financial source of truth.
 - Financial data shown in the UI must be refreshed from backend after a transfer.
 - The app must support manual transfer fallback when NFC is unavailable.
 - Native dependencies should be kept minimal and checked for compatibility before adoption.
+- Typed navigation params should be defined before adding routes that pass data.
 
 ## References
 

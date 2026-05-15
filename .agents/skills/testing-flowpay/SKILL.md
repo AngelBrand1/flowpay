@@ -1,6 +1,6 @@
 ---
 name: testing-flowpay
-description: FlowPay testing skill for domain tests, FastAPI tests, PostgreSQL-backed integration tests, SQLAlchemy/Alembic validation, React Native tests, NFC parser tests, idempotency tests, concurrency tests, and regression coverage for financial invariants. Use when Codex designs, implements, reviews, or explains tests for FlowPay.
+description: FlowPay testing skill for domain tests, FastAPI tests, PostgreSQL-backed integration tests, SQLAlchemy/Alembic validation, React Native tests, NFC parser tests, idempotency tests, concurrency tests, architecture-boundary checks, and regression coverage for financial invariants. Use when Codex designs, implements, reviews, or explains tests for FlowPay.
 ---
 
 # Testing FlowPay
@@ -8,6 +8,8 @@ description: FlowPay testing skill for domain tests, FastAPI tests, PostgreSQL-b
 ## Mission
 
 Protect FlowPay's financial and auth invariants with focused tests. Prefer tests that prove behavior at the correct boundary instead of broad tests that only exercise framework plumbing.
+
+For MVP work, require at least the cheapest verification that protects the boundary being introduced. "No business logic" can justify no domain test, but not skipping type checks, dependency checks, or adapter-level checks when those are the risk.
 
 ## Required Context
 
@@ -32,6 +34,7 @@ Use the smallest test scope that can prove the behavior:
 - FastAPI route tests for request/response mapping, auth enforcement, and error contracts.
 - React Native tests for flow state, UI behavior, API adapters, secure storage wrappers, and NFC payload parsing.
 - Manual Android device validation for real NFC behavior.
+- Type/lint/import-boundary checks for scaffolding and architecture-only changes.
 
 ## Required Financial Coverage
 
@@ -69,6 +72,8 @@ Cover:
 Cover:
 
 - token storage through secure storage wrapper;
+- shared HTTP client does not import auth storage directly;
+- navigation route params are typed;
 - missing/expired token returns to auth flow;
 - balance/history refresh after transfer;
 - manual fallback when NFC is unavailable;
@@ -79,6 +84,7 @@ Cover:
 ## Test Design Rules
 
 - Test domain invariants directly when possible.
+- For setup-only changes, run static verification such as TypeScript, lint, or import-boundary checks instead of pretending there is no testable risk.
 - Use PostgreSQL, not SQLite, for tests involving locks, transactions, constraints, or concurrent money movement.
 - Make idempotency and concurrency tests deterministic where practical.
 - Prefer factories/builders over duplicating setup noise.
